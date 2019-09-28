@@ -12,7 +12,7 @@ ebpm_exponential_mixture <- function(x,s,m = 2, grid = NULL, seed = 123){
   tmp <-  compute_L(x,s,a, b)
   L =  tmp$L
   l_rowmax = tmp$l_rowmax
-  fit <- mixsqp(L, control = list(verbose = T))
+  fit <- mixsqp(L, control = list(verbose = F))
   ll_pi = sum(log(exp(l_rowmax) * L %*%  fit$x))
   pi = fit$x
   cpm = outer(x,a,  "+")/outer(s, b, "+")

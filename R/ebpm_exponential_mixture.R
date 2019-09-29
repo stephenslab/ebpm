@@ -1,8 +1,32 @@
-#' @title Empirical Bayes Poisson Mean with Mixture of Exponential as Prior
-#' @describeIn estimate mixture weight and posterior mean
-#' @import mixsqp
-#' @export 
-#'
+#' @title Empirical Bayes Poisson Mean with Point Gamma  as Prior
+#' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
+#' with Mixture of Exponential: g()  = \sum_k \pi_k gamma(1, b_k) 
+#' b_k is selected to cover the lambda_i  of interest for all data  points x_i
+#' #' @import mixsqp
+
+
+#' @details The model is fit in 2 stages: i) estimate \eqn{g} by maximum likelihood (over pi_k)
+#' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
+#' @param x vector of Poisson observations.
+#' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
+#' @param m multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2
+#' @param grid locations of b_k; if left NULL the algorithm automatically selects them based on data
+#' @param seed random seed
+#' @examples 
+#'    beta = c(rep(0,50),rexp(50))
+#'    x = rpois(100,beta) # simulate Poisson observations
+#'    s = replicate(100,1)
+#'    out = ebpm_exponential_mixture(x,s, m)
+#' @export
+
+
+## TODO: 
+### add gradient and Hessian to nlm
+### compare with other optimization packages
+### investigate warnings  output in nlm, and suppress them if ok
+
+
+
 ## compute ebpm_exponential_mixture problem
 ebpm_exponential_mixture <- function(x,s,m = 2, grid = NULL, seed = 123){
   set.seed(seed)

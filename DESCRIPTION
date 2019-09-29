@@ -15,4 +15,5 @@ RoxygenNote: 6.1.1
 Imports:
     mixsqp,
     ggplot2,
-    gtools
+    gtools,
+    stats

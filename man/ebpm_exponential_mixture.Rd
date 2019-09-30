@@ -17,6 +17,20 @@ ebpm_exponential_mixture(x, s, m = 2, grid = NULL, seed = 123)
 
 \item{seed}{random seed}
 }
+\value{
+A list containing elements:
+    \describe{
+      \item{\code{posterior}}{A data frame of summary results (posterior
+        means, and to add posterior log mean).}
+      \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+      \item{\code{log_likelihood}}{The optimal log likelihood attained
+        \eqn{L(\hat{g})}.}
+      \item{\code{posterior_sampler}}{(TO ADD!!!) A function that can be used to
+        produce samples from the posterior. It takes a single parameter
+        \code{nsamp}, the number of posterior samples to return per
+        observation.}
+     }
+}
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
 with Mixture of Exponential: g()  = \sum_k \pi_k gamma(1, b_k) 
@@ -31,4 +45,5 @@ ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
    x = rpois(100,beta) # simulate Poisson observations
    s = replicate(100,1)
    out = ebpm_exponential_mixture(x,s, m)
+   
 }

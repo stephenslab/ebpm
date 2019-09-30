@@ -12,20 +12,28 @@
 #' @param m multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2
 #' @param grid locations of b_k; if left NULL the algorithm automatically selects them based on data
 #' @param seed random seed
+#' 
+#' 
+#' @return A list containing elements:
+#'     \describe{
+#'       \item{\code{posterior}}{A data frame of summary results (posterior
+#'         means, and to add posterior log mean).}
+#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+#'       \item{\code{log_likelihood}}{The optimal log likelihood attained
+#'         \eqn{L(\hat{g})}.}
+#'       \item{\code{posterior_sampler}}{(TO ADD!!!) A function that can be used to
+#'         produce samples from the posterior. It takes a single parameter
+#'         \code{nsamp}, the number of posterior samples to return per
+#'         observation.}
+#'      }
 #' @examples 
 #'    beta = c(rep(0,50),rexp(50))
 #'    x = rpois(100,beta) # simulate Poisson observations
 #'    s = replicate(100,1)
+#'    m = 2
 #'    out = ebpm_exponential_mixture(x,s, m)
+#'    
 #' @export
-
-
-## TODO: 
-### add gradient and Hessian to nlm
-### compare with other optimization packages
-### investigate warnings  output in nlm, and suppress them if ok
-
-
 
 ## compute ebpm_exponential_mixture problem
 ebpm_exponential_mixture <- function(x,s,m = 2, grid = NULL, seed = 123){
@@ -37,16 +45,16 @@ ebpm_exponential_mixture <- function(x,s,m = 2, grid = NULL, seed = 123){
   L =  tmp$L
   l_rowmax = tmp$l_rowmax
   fit <- mixsqp(L, control = list(verbose = F))
-  ll_pi = sum(log(exp(l_rowmax) * L %*%  fit$x))
+  log_likelihood = sum(log(exp(l_rowmax) * L %*%  fit$x))
   pi = fit$x
+  fitted_g = list(pi = pi, a = a,  b  = b)
   cpm = outer(x,a,  "+")/outer(s, b, "+")
   Pi_tilde = t(t(L) * pi)
   Pi_tilde = Pi_tilde/rowSums(Pi_tilde)
   lam_pm = rowSums(Pi_tilde * cpm)
-  ll_lam = sum(dpois(x, s*lam_pm, log = T))
-  return(list(pi = pi, lam_pm = lam_pm, ll_lam = ll_lam,ll_pi = ll_pi,L = L,grid = grid))
+  posterior = list(mean = lam_pm)
+  return(list(fitted_g = fitted_g, posterior = posterior,log_likelihood = log_likelihood))
 }
-
 
 geom_seq <- function(low, up, m){
   N =  ceiling(log(up/low)/log(m)) + 1

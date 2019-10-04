@@ -31,13 +31,14 @@
 #' @export
 
 
-
+#trace("pg_nlm_fn", quote(if(any(is.nan(log(par[1])))) { browser() }), at=4, print=F)
 
 ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   set.seed(seed) ## though seems determined
   ## MLE
   opt = nlm(pg_nlm_fn, transform_param(init_par), x, s)
   opt_par = transform_param_back(opt$estimate)
+  #browser()
   log_likelihood =  -pg_nlm_fn(transform_param(opt_par), x, s)
   fitted_g = list(pi = opt_par[1], a = opt_par[2], b  = opt_par[3])
   ## posterior mean
@@ -46,16 +47,17 @@ ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   b =  opt_par[3]
   nb = dnbinom(x, size = a, prob = b/(b+s))
   pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
-  posterior = list(mean = pm)
+  posterior = data.frame(mean = pm)
   return(list(fitted_g = fitted_g, posterior = posterior, log_likelihood = log_likelihood))
 }
 
 pg_nlm_fn <- function(par, x, s){
-  pi = log(par[1]) - log(1-par[1])
+  pi = log(par[1]/1-par[1])
   a = par[2]
   b  =  exp(par[3])
   d <- dnbinom(x, a, b/(b+s), log = F) 
   c = as.integer(x ==  0) - d
+  #if(is.nan(log(pi * c + d))){browser()} why this never works?
   return(-sum(log(pi*c + d)))
 }
 

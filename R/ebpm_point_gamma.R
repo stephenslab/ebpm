@@ -36,10 +36,9 @@
 ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   set.seed(seed) ## though seems determined
   ## MLE
-  opt = nlm(pg_nlm_fn, transform_param(init_par), x, s)
+  opt = nlm(pg_nlm_fn, transform_param(init_par), x, s, print.level = 0)
+  log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
   opt_par = transform_param_back(opt$estimate)
-  #browser()
-  log_likelihood =  -pg_nlm_fn(transform_param(opt_par), x, s)
   fitted_g = list(pi = opt_par[1], a = opt_par[2], b  = opt_par[3])
   ## posterior mean
   pi = opt_par[1]
@@ -52,27 +51,28 @@ ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
 }
 
 pg_nlm_fn <- function(par, x, s){
-  pi = log(par[1]/1-par[1])
-  a = par[2]
+  pi = 1/(1+ exp(-par[1]))
+  a = exp(par[2])
   b  =  exp(par[3])
   d <- dnbinom(x, a, b/(b+s), log = F) 
   c = as.integer(x ==  0) - d
-  #if(is.nan(log(pi * c + d))){browser()} why this never works?
+  #if(is.nan(sum(log(pi * c + d)))){browser()}
   return(-sum(log(pi*c + d)))
 }
 
 transform_param <- function(par0){
   par = rep(0,length(par0))
-  par[1] = 1/(1+exp(-par0[1]))
-  par[2] = par0[2]
+  par[1] = log(par0[1]/(1-par0[1]))
+  par[2] = log(par0[2])
   par[3] = log(par0[3])
   return(par)
 }
 
 transform_param_back <- function(par){
   par0 = rep(0,length(par))
-  par0[1] = log(par[1]) - log(1-par[1])
-  par0[2] = par[2]
+  #par0[1] = log(par[1]) - log(1-par[1])
+  par0[1] = 1/(1+ exp(-par[1]))
+  par0[2] = exp(par[2])
   par0[3] = exp(par[3])
   return(par0)
 }

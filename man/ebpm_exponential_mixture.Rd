@@ -4,7 +4,8 @@
 \alias{ebpm_exponential_mixture}
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
-ebpm_exponential_mixture(x, s, m = 2, grid = NULL, seed = 123)
+ebpm_exponential_mixture(x, s, m = 2, d = NULL, grid = NULL,
+  seed = 123)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
@@ -12,6 +13,8 @@ ebpm_exponential_mixture(x, s, m = 2, grid = NULL, seed = 123)
 \item{s}{vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.}
 
 \item{m}{multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2}
+
+\item{d}{if m is not sepcified, d is number of points in the grid; if both m and d are specified, only m will be used}
 
 \item{grid}{locations of b_k; if left NULL the algorithm automatically selects them based on data}
 
@@ -44,6 +47,7 @@ ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
    beta = c(rep(0,50),rexp(50))
    x = rpois(100,beta) # simulate Poisson observations
    s = replicate(100,1)
-   out = ebpm_exponential_mixture(x,s, m)
+   m = 2
+   out = ebpm::ebpm_exponential_mixture(x,s, m)
    
 }

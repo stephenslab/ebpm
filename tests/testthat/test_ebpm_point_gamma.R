@@ -1,5 +1,5 @@
 ## test
-
+context("test_ebpm_point_gamma")
 sim_spike_one <- function(pi, a, b){
   if(rbinom(1,1, pi)){return(0)}
   else{return(rgamma(1,shape = a, rate = b))}
@@ -13,6 +13,10 @@ simulate_pm <- function(s, param){
   x = rpois(length(s), s*lam)
   ll = -pg_nlm_fn(transform_param(param), x, s)
   return(list(x = x, s= s, lam_true = lam, param = param, log_likelihood = ll))
+}
+
+rmse <- function(x,y){
+  return(sqrt(mean((x-y)^2)))
 }
 
 n = 4000

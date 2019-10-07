@@ -1,6 +1,5 @@
-
+context("test_ebpm_exponential_mixture")
 library(gtools)
-
 ## testing setup
 sim_mgamma <- function(a,b,pi){
   idx = which(rmultinom(1,1,pi) == 1)

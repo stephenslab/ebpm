@@ -44,20 +44,30 @@ ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   pi = opt_par[1]
   a =  opt_par[2]
   b =  opt_par[3]
-  nb = dnbinom(x, size = a, prob = b/(b+s))
-  pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
-  posterior = data.frame(mean = pm)
+  nb = exp(dnbinom_cts_log_vec(x, a, prob = b/(b+s)))
+  lam_pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  lam_log_pm =  digamma(a + x) - log(b + s)
+  lam_log_pm[x == 0] = -Inf
+  posterior = data.frame(mean = lam_pm, mean_log = lam_log_pm)
   return(list(fitted_g = fitted_g, posterior = posterior, log_likelihood = log_likelihood))
 }
 
 pg_nlm_fn <- function(par, x, s){
+  #browser()
   pi = 1/(1+ exp(-par[1]))
   a = exp(par[2])
   b  =  exp(par[3])
-  d <- dnbinom(x, a, b/(b+s), log = F) 
+  d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
   c = as.integer(x ==  0) - d
   #if(is.nan(sum(log(pi * c + d)))){browser()}
   return(-sum(log(pi*c + d)))
+}
+
+# it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
+dnbinom_cts_log_vec <- function(x, a, prob){
+  tmp = x*log(1-prob)
+  tmp[x == 0] = 0 ## R says 0*-Inf = NaN
+  return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
 }
 
 transform_param <- function(par0){

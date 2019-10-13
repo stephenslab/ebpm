@@ -1,6 +1,6 @@
 #' @title Empirical Bayes Poisson Mean with Point Gamma  as Prior
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-#' with Mixture of Exponential: g()  = \sum_k \pi_k gamma(1, b_k) 
+#' with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) 
 #' b_k is selected to cover the lambda_i  of interest for all data  points x_i
 #' @import mixsqp
 

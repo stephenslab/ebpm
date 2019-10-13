@@ -1,6 +1,6 @@
 #' @title Empirical Bayes Poisson Mean with Point Gamma  as Prior
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-#' with Point Gamma: g()  = pi_0 \delta() + (1-\pi_0) gamma(a, b)
+#' with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
 #' 
 #' #' @import stats
 
@@ -35,6 +35,8 @@
 
 ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   set.seed(seed) ## though seems determined
+  if(is.null(init_par)){init_par = c(0.5,1,1)}
+  init_par[1] = max(init_par[1], 0.999)
   ## MLE
   opt = nlm(pg_nlm_fn, transform_param(init_par), x, s, print.level = 0)
   log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)

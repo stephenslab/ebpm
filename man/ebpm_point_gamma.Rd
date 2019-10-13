@@ -31,7 +31,7 @@ A list containing elements:
 }
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-with Point Gamma: g()  = pi_0 \delta() + (1-\pi_0) gamma(a, b)
+with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
 
 #' @import stats
 }

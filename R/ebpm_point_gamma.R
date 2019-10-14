@@ -2,7 +2,7 @@
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
 #' with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
 #' 
-#' #' @import stats
+#' @import stats
 
 #' @details The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, a, b)
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
@@ -38,7 +38,7 @@ ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   if(is.null(init_par)){init_par = c(0.5,1,1)}
   init_par[1] = max(init_par[1], 0.999)
   ## MLE
-  opt = nlm(pg_nlm_fn, transform_param(init_par), x, s, print.level = 0)
+  opt = nlm(pg_nlm_fn, transform_param(init_par), x, s, print.level = 0, gradtol = 1e-15)
   log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
   opt_par = transform_param_back(opt$estimate)
   fitted_g = list(pi = opt_par[1], a = opt_par[2], b  = opt_par[3])
@@ -47,7 +47,9 @@ ebpm_point_gamma <- function(x, s, init_par = c(0.5,1,1), seed = 123){
   a =  opt_par[2]
   b =  opt_par[3]
   nb = exp(dnbinom_cts_log_vec(x, a, prob = b/(b+s)))
-  lam_pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  # lam_pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  pi_hat = pi*as.integer(x ==  0)/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  lam_pm = (1-pi_hat)*(a+x)/(b+s)
   lam_log_pm =  digamma(a + x) - log(b + s)
   lam_log_pm[x == 0] = -Inf
   posterior = data.frame(mean = lam_pm, mean_log = lam_log_pm)

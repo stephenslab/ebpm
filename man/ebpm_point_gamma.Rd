@@ -4,14 +4,17 @@
 \alias{ebpm_point_gamma}
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
-ebpm_point_gamma(x, s, init_par = c(0.5, 1, 1), seed = 123)
+ebpm_point_gamma(x, s, g_init = NULL, fix_g = F, control = NULL,
+  seed = 123)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
 
 \item{s}{vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.}
 
-\item{init_par}{vector of initialization for c(pi, a, b); default is c(0.5,1,1)}
+\item{g_init}{vector of initialization for c(pi, a, b); default is c(0.5,1,1)}
+
+\item{control}{A list of control parameters  to be passed to the optimization function. `nlm` is  used.}
 
 \item{seed}{set seed (not necessary now)}
 }
@@ -32,8 +35,6 @@ A list containing elements:
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
 with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
-
-#' @import stats
 }
 \details{
 The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, a, b)

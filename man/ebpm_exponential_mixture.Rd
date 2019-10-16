@@ -5,7 +5,7 @@
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
 ebpm_exponential_mixture(x, s, m = 2, d = NULL, grid = NULL,
-  seed = 123)
+  control = NULL, fitted_g = NULL, seed = 123)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
@@ -16,7 +16,11 @@ ebpm_exponential_mixture(x, s, m = 2, d = NULL, grid = NULL,
 
 \item{d}{if m is not sepcified, d is number of points in the grid; if both m and d are specified, only m will be used}
 
-\item{grid}{locations of b_k; if left NULL the algorithm automatically selects them based on data}
+\item{grid}{locations of b_k; if left NULL the algorithm automatically selects them based on data and m or d}
+
+\item{control}{A list of control parameters  to be passed to the optimization function. `mixsqp` is  used.}
+
+\item{fitted_g}{if it is not NULL, then it is used to get posterior and loglikelihood}
 
 \item{seed}{random seed}
 }

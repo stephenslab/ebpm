@@ -8,7 +8,8 @@
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 #' @param x vector of Poisson observations.
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
-#' @param init_par vector of initialization for c(pi, a, b); default is c(0.5,1,1)
+#' @param g_init vector of initialization for c(pi, a, b); default is c(0.5,1,1)
+#' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
 #' @param seed set seed (not necessary now)
 #' 
 #' @return A list containing elements:
@@ -35,49 +36,59 @@
 
 
 
-ebpm_point_gamma <- function(x, s, init_par = NULL, seed = 123){
-  if(is.null(init_par)){
-    mus = 10^seq(0,5,1)
-    for(mu in mus){
-      init_par = c(0.5, mu*mean(x[x!=0]/s[x != 0]),mu);
-      try(
-        return(ebpm_point_gamma_helper(x, s, init_par, seed = seed)), silent = T
-      )
-    }
-    stop('ebpm_point_gamma fails  for multiple initialization')
-  }
-  else{
-    try(return(ebpm_point_gamma_helper(x, s, init_par, seed = seed)))
-    stop('ebpm_point_gamma fails  for multiple initialization')
-  }
-}
+# ebpm_point_gamma <- function(x, s, g_init = NULL, seed = 123){
+#   if(is.null(g_init)){
+#     mus = 10^seq(0,5,1)
+#     for(mu in mus){
+#       g_init = c(0.5, mu*mean(x[x!=0]/s[x != 0]),mu);
+#       try(
+#         return(ebpm_point_gamma_helper(x, s, g_init, seed = seed)), silent = T
+#       )
+#     }
+#     stop('ebpm_point_gamma fails  for multiple initialization')
+#   }
+#   else{
+#     try(return(ebpm_point_gamma_helper(x, s, g_init, seed = seed)))
+#     stop('ebpm_point_gamma fails  for multiple initialization')
+#   }
+# }
   
 
-ebpm_point_gamma_helper <- function(x, s, init_par, seed = 123){
+
+
+## TODO:
+## consider the case where X are all  0s.   If  s are  not all 0, then pi* = 1, which is not reachable after transformation
+ebpm_point_gamma <- function(x, s, g_init = NULL, fix_g = F, control = NULL, seed = 123){
   set.seed(seed) ## though seems determined
-  # if(is.null(init_par)){init_par = c(0.5,1,1)}
-  # init_par[1] = max(init_par[1], 0.999)
+  #if(!is.null(g_init)){browser()}
+  if(is.null(g_init)){g_init = c(0.5,1,1); fix_g =  F}
+  g_init = as.numeric(g_init)
   
-  ## MLE
-  if(all(x  > 0)){ ## in  this case, optimal pi0 is 0, but is not reachable  after a transformation in nlm
-    init_par = c(init_par[2],  init_par[3])
-    opt = nlm(pg_nlm_fn_pi0, transform_param_pi0(init_par), x, s, print.level = 0, gradtol = 1e-15)
-    log_likelihood =  -pg_nlm_fn_pi0(opt$estimate, x, s)
-    opt_par = c(0, transform_param_back_pi0(opt$estimate))
-    fitted_g = list(pi = opt_par[1], a = opt_par[2], b  = opt_par[3])
+  if(!fix_g){
+    if(is.null(control)){control = nlm_control_defaults()}
+    ## MLE
+    fn_params = list(x = x, s = s)
+    if(all(x  > 0)){ ## in  this case, optimal pi0 is 0, but is not reachable after a transformation in nlm
+      g_init = c(g_init[2],  g_init[3])
+      opt = do.call(nlm, c(list(pg_nlm_fn_pi0, transform_param_pi0(g_init)), fn_params, control))
+      log_likelihood =  -pg_nlm_fn_pi0(opt$estimate, x, s)
+      opt_g = c(0, transform_param_back_pi0(opt$estimate))
+    }else{
+      opt = do.call(nlm, c(list(pg_nlm_fn, transform_param(g_init)), fn_params, control))
+      log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
+      opt_g = transform_param_back(opt$estimate)
+    }
   }else{
-    opt = nlm(pg_nlm_fn, transform_param(init_par), x, s, print.level = 0, gradtol = 1e-15)
-    log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
-    opt_par = transform_param_back(opt$estimate)
-    fitted_g = list(pi = opt_par[1], a = opt_par[2], b  = opt_par[3])
+    opt_g = g_init
+    log_likelihood =  ifelse(g_init[1] == 0, -pg_nlm_fn_pi0(transform_param_pi0(opt_g), x, s), -pg_nlm_fn(transform_param(opt_g), x, s))
   }
   
+  fitted_g = list(pi = opt_g[1], a = opt_g[2], b  = opt_g[3])
   ## posterior mean
-  pi = opt_par[1]
-  a =  opt_par[2]
-  b =  opt_par[3]
+  pi = fitted_g$pi
+  a =  fitted_g$a
+  b =  fitted_g$b
   nb = exp(dnbinom_cts_log_vec(x, a, prob = b/(b+s)))
-  # lam_pm = ((1-pi)*nb*(a+x)/(b+s))/(pi*as.integer(x ==  0) + (1-pi)*nb)
   pi_hat = pi*as.integer(x ==  0)/(pi*as.integer(x ==  0) + (1-pi)*nb)
   lam_pm = (1-pi_hat)*(a+x)/(b+s)
   lam_log_pm =  digamma(a + x) - log(b + s)
@@ -123,7 +134,6 @@ transform_param <- function(par0){
 
 transform_param_back <- function(par){
   par0 = rep(0,length(par))
-  #par0[1] = log(par[1]) - log(1-par[1])
   par0[1] = 1/(1+ exp(-par[1]))
   par0[2] = exp(par[2])
   par0[3] = exp(par[3])
@@ -139,7 +149,6 @@ transform_param_pi0 <- function(par0){
 
 transform_param_back_pi0 <- function(par){
   par0 = rep(0,length(par))
-  #par0[1] = log(par[1]) - log(1-par[1])
   par0[1] = exp(par[1])
   par0[2] = exp(par[2])
   return(par0)

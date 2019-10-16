@@ -10,7 +10,9 @@
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
 #' @param m multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2
 #' @param d if m is not sepcified, d is number of points in the grid; if both m and d are specified, only m will be used
-#' @param grid locations of b_k; if left NULL the algorithm automatically selects them based on data
+#' @param grid locations of b_k; if left NULL the algorithm automatically selects them based on data and m or d
+#' @param control A list of control parameters  to be passed to the optimization function. `mixsqp` is  used. 
+#' @param fitted_g if it is not NULL, then it is used to get posterior and loglikelihood
 #' @param seed random seed
 #' 
 #' 
@@ -36,19 +38,34 @@
 #' @export
 
 ## compute ebpm_exponential_mixture problem
-ebpm_exponential_mixture <- function(x,s,m = 2, d = NULL, grid = NULL, seed = 123){
+ebpm_exponential_mixture <- function(x,s,m = 2, d = NULL, grid = NULL, control =  NULL, fitted_g = NULL,seed = 123){
   set.seed(seed)
+  if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(grid)){grid <- select_grid_exponential(x,s,m)}
-  b = grid$b
-  a = grid$a
-  tmp <-  compute_L(x,s,a, b)
-  L =  tmp$L
-  l_rowmax = tmp$l_rowmax
-  fit <- mixsqp(L, control = list(verbose = F))
-  log_likelihood = sum(log(exp(l_rowmax) * L %*%  fit$x))
-  pi = fit$x
-  pi = pi/sum(pi) ## seems that some times pi does not sum to one
-  fitted_g = list(pi = pi, a = a,  b  = b)
+  
+  if(is.null(fitted_g)){ ## need to estimate fitted_g
+    b = grid$b
+    a = grid$a
+    tmp <-  compute_L(x,s,a, b)
+    L =  tmp$L
+    l_rowmax = tmp$l_rowmax
+    fit <- mixsqp(L, control = control)
+    log_likelihood = sum(log(exp(l_rowmax) * L %*%  fit$x))
+    pi = fit$x
+    pi = pi/sum(pi) ## seems that some times pi does not sum to one
+    fitted_g = list(pi = pi, a = a,  b  = b)
+  }
+  else{
+    pi = fitted_g$pi
+    a = fitted_g$a
+    b = fitted_g$b
+    ## compute loglikelihood
+    tmp <-  compute_L(x,s,a, b)
+    L =  tmp$L
+    l_rowmax = tmp$l_rowmax
+    log_likelihood = sum(log(exp(l_rowmax) * L %*%  pi))
+  }
+ 
   cpm = outer(x,a,  "+")/outer(s, b, "+")
   Pi_tilde = t(t(L) * pi)
   Pi_tilde = Pi_tilde/rowSums(Pi_tilde)
@@ -65,10 +82,10 @@ geom_seq <- function(low, up, m){
   return(out)
 }
 
-lin_seq <- function(low, up, m){
-  out = seq(low, up, length.out = m)
-  return(out)
-}
+# lin_seq <- function(low, up, m){
+#   out = seq(low, up, length.out = m)
+#   return(out)
+# }
 
 ## select grid for b_k
 select_grid_exponential <- function(x, s, m = 2, d = NULL){

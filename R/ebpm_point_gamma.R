@@ -9,6 +9,7 @@
 #' @param x vector of Poisson observations.
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
 #' @param g_init vector of initialization for c(pi, a, b); default is c(0.5,1,1)
+#' @param fix_g whether to fix g at g_init or not; used  only  if g_init is not NULL
 #' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
 #' @param seed set seed (not necessary now)
 #' 
@@ -19,10 +20,6 @@
 #'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
 #'       \item{\code{log_likelihood}}{The optimal log likelihood attained
 #'         \eqn{L(\hat{g})}.}
-#'       \item{\code{posterior_sampler}}{(TO ADD!!!) A function that can be used to
-#'         produce samples from the posterior. It takes a single parameter
-#'         \code{nsamp}, the number of posterior samples to return per
-#'         observation.}
 #'      }
 #' @examples 
 #'    beta = c(rep(0,50),rexp(50))

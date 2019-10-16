@@ -32,10 +32,6 @@ A list containing elements:
       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
       \item{\code{log_likelihood}}{The optimal log likelihood attained
         \eqn{L(\hat{g})}.}
-      \item{\code{posterior_sampler}}{(TO ADD!!!) A function that can be used to
-        produce samples from the posterior. It takes a single parameter
-        \code{nsamp}, the number of posterior samples to return per
-        observation.}
      }
 }
 \description{

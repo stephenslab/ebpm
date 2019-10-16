@@ -14,6 +14,8 @@ ebpm_point_gamma(x, s, g_init = NULL, fix_g = F, control = NULL,
 
 \item{g_init}{vector of initialization for c(pi, a, b); default is c(0.5,1,1)}
 
+\item{fix_g}{whether to fix g at g_init or not; used  only  if g_init is not NULL}
+
 \item{control}{A list of control parameters  to be passed to the optimization function. `nlm` is  used.}
 
 \item{seed}{set seed (not necessary now)}
@@ -26,10 +28,6 @@ A list containing elements:
       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
       \item{\code{log_likelihood}}{The optimal log likelihood attained
         \eqn{L(\hat{g})}.}
-      \item{\code{posterior_sampler}}{(TO ADD!!!) A function that can be used to
-        produce samples from the posterior. It takes a single parameter
-        \code{nsamp}, the number of posterior samples to return per
-        observation.}
      }
 }
 \description{

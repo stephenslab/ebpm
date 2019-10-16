@@ -1,5 +1,6 @@
 ## test
 context("test_ebpm_point_gamma")
+library(ebpm)
 sim_spike_one <- function(pi, a, b){
   if(rbinom(1,1, pi)){return(0)}
   else{return(rgamma(1,shape = a, rate = b))}
@@ -27,7 +28,10 @@ b  = 1
 param =  c(pi, a, b)
 sim = simulate_pm(s, param)
 
-fit <- ebpm_point_gamma(sim$x, sim$s)
+fit <- ebpm::ebpm_point_gamma(sim$x, sim$s)
+
+fit_fixg <- ebpm::ebpm_point_gamma(sim$x, sim$s, g_init = fit$fitted_g, fix_g = T)
+
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {
   expect_gt(fit$log_likelihood, sim$log_likelihood)
@@ -35,8 +39,15 @@ test_that("fitted loglikelihood > simulated  loglikelihood", {
 
 test_that("RMSE: posterior  > MLE", {
   expect_lt(rmse(fit$posterior$mean, sim$lam_true), rmse(sim$x/sim$s, sim$lam_true))
-  ## expect_gt(rmse(fit$posterior$mean, sim$lam_true), rmse(sim$x/sim$s, sim$lam_true)) ## this should  give error
 })
+
+
+test_that("test fix_g", {
+  expect_false(any(fit$posterior != fit_fixg$posterior) || fit$log_likelihood != fit_fixg$log_likelihood)
+})
+
+
+
 
 ## to do:
 ## add  comparison  with `ashr_pois` when it is updated.  

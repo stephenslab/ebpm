@@ -86,7 +86,11 @@ ebpm_point_gamma <- function(x, s, g_init = NULL, fix_g = F, control = NULL, see
   a =  fitted_g$a
   b =  fitted_g$b
   nb = exp(dnbinom_cts_log_vec(x, a, prob = b/(b+s)))
-  pi_hat = pi*as.integer(x ==  0)/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  
+  if(pi == 0){pi_hat = replicate(length(x),0)}
+  else{pi_hat = pi*as.integer(x == 0)/(pi*as.integer(x ==  0) + (1-pi)*nb)}
+  #pi_hat = pi*as.integer(x ==  0)/(pi*as.integer(x ==  0) + (1-pi)*nb)
+  
   lam_pm = (1-pi_hat)*(a+x)/(b+s)
   lam_log_pm =  digamma(a + x) - log(b + s)
   lam_log_pm[x == 0] = -Inf

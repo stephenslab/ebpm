@@ -2,5 +2,6 @@
 
 export(ebpm_exponential_mixture)
 export(ebpm_point_gamma)
+export(gammamix)
 import(mixsqp)
 import(stats)

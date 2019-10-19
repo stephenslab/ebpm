@@ -1,21 +1,29 @@
-#' @title Empirical Bayes Poisson Mean with Point Gamma  as Prior
+#' @title Empirical Bayes Poisson Mean with Point Exponential  as Prior
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-#' with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) 
+#' with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) (or sum_k pi_k exp(1/b_k))
 #' b_k is selected to cover the lambda_i  of interest for all data  points x_i
 #' @import mixsqp
 
 #' @details The model is fit in 2 stages: i) estimate \eqn{g} by maximum likelihood (over pi_k)
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
-#' @param x vector of Poisson observations.
-#' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
+#' @param x A vector of Poisson observations.
+#' @param s A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.
+#' @param scale A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b}. It specifies the scale parameter(s) of the
+#'   prior or \code{"estimate"} if the scale parameters are to be estimated
+#'   from the data. 
+#' @param g_init The prior distribution \eqn{g}. Usually this is left
+#'   unspecified (\code{NULL}) and estimated from the data. However, it can be
+#'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
+#'   example, to do computations with the "true" \eqn{g} in simulations). If
+#'   \code{g_init} is specified but \code{fix_g = FALSE}, \code{g_init}
+#'   specifies the initial value of \eqn{g} used during optimization. 
+#'
+#' @param fix_g If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
+#'   of estimating it.
+#'   
 #' @param m multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2
-#' @param d if m is not sepcified, d is number of points in the grid; if both m and d are specified, only m will be used
-#' @param grid locations of b_k; if left NULL the algorithm automatically selects them based on data and m or d
-#' @param control A list of control parameters  to be passed to the optimization function. `mixsqp` is  used. 
-#' @param fitted_g if it is not NULL, then it is used to get posterior and loglikelihood
-#' @param seed random seed
-#' 
-#' 
+#' @param control A list of control parameters  to be passed to the optimization function. `mixsqp` is  used.
+#'
 #' @return A list containing elements:
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
@@ -29,39 +37,42 @@
 #'    x = rpois(100,beta) # simulate Poisson observations
 #'    s = replicate(100,1)
 #'    m = 2
-#'    out = ebpm::ebpm_exponential_mixture(x,s, m)
+#'    out = ebpm::ebpm_exponential_mixture(x,s)
 #'    
 #' @export
 
 ## compute ebpm_exponential_mixture problem
-ebpm_exponential_mixture <- function(x,s,m = 2, d = NULL, grid = NULL, control =  NULL, fitted_g = NULL,seed = 123){
-  set.seed(seed)
+ebpm_exponential_mixture <- function(x,s, scale = "estimate", g_init = NULL, fix_g = F,m = 2, control =  NULL){
+  ## scale --> g_init by adding pi
   if(is.null(control)){control = mixsqp_control_defaults()}
-  if(is.null(grid)){grid <- select_grid_exponential(x,s,m)}
+  if(is.null(g_init)){
+    fix_g = F ## then automatically unfix g if specified so
+    if(identical(scale, "estimate")){scale <- select_grid_exponential(x,s,m)}
+    g_init = scale2gammamix_init(scale)
+  }
   
-  if(is.null(fitted_g)){ ## need to estimate fitted_g
-    b = grid$b
-    a = grid$a
+  if(!fix_g){ ## need to estimate g_init
+    b = g_init$b
+    a = g_init$a
     tmp <-  compute_L(x,s,a, b)
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
-    fit <- mixsqp(L, control = control)
-    log_likelihood = sum(log(exp(l_rowmax) * L %*%  fit$x))
+    fit <- mixsqp(L, x0 = g_init$pi, control = control)
     pi = fit$x
     pi = pi/sum(pi) ## seems that some times pi does not sum to one
-    fitted_g = list(pi = pi, a = a,  b  = b)
   }
   else{
-    pi = fitted_g$pi
-    a = fitted_g$a
-    b = fitted_g$b
+    pi = g_init$pi
+    a = g_init$a
+    b = g_init$b
     ## compute loglikelihood
     tmp <-  compute_L(x,s,a, b)
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
-    log_likelihood = sum(log(exp(l_rowmax) * L %*%  pi))
   }
- 
+  fitted_g = list(pi = pi, a = a,  b  = b)
+  log_likelihood = sum(log(exp(l_rowmax) * L %*%  pi))
+  
   cpm = outer(x,a,  "+")/outer(s, b, "+")
   Pi_tilde = t(t(L) * pi)
   Pi_tilde = Pi_tilde/rowSums(Pi_tilde)
@@ -97,7 +108,7 @@ select_grid_exponential <- function(x, s, m = 2, d = NULL){
   mu_grid = geom_seq(mu_grid_min, mu_grid_max, m)
   b = 1/mu_grid
   a = rep(1, length(b))
-  return(list(a= a, b = b))
+  return(list(a = a, b = b))
 }
 
 ## compute L matrix from data and selected grid

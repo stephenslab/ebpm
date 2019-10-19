@@ -2,27 +2,33 @@
 % Please edit documentation in R/ebpm_exponential_mixture.R
 \name{ebpm_exponential_mixture}
 \alias{ebpm_exponential_mixture}
-\title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
+\title{Empirical Bayes Poisson Mean with Point Exponential  as Prior}
 \usage{
-ebpm_exponential_mixture(x, s, m = 2, d = NULL, grid = NULL,
-  control = NULL, fitted_g = NULL, seed = 123)
+ebpm_exponential_mixture(x, s, scale = "estimate", g_init = NULL,
+  fix_g = F, m = 2, control = NULL)
 }
 \arguments{
-\item{x}{vector of Poisson observations.}
+\item{x}{A vector of Poisson observations.}
 
-\item{s}{vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.}
+\item{s}{A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.}
+
+\item{scale}{A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b}. It specifies the scale parameter(s) of the
+prior or \code{"estimate"} if the scale parameters are to be estimated
+from the data.}
+
+\item{g_init}{The prior distribution \eqn{g}. Usually this is left
+unspecified (\code{NULL}) and estimated from the data. However, it can be
+used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
+example, to do computations with the "true" \eqn{g} in simulations). If
+\code{g_init} is specified but \code{fix_g = FALSE}, \code{g_init}
+specifies the initial value of \eqn{g} used during optimization.}
+
+\item{fix_g}{If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
+of estimating it.}
 
 \item{m}{multiple coefficient when selectig grid, so the  b_k is of the form {low*m^{k-1}}; must be greater than 1; default is 2}
 
-\item{d}{if m is not sepcified, d is number of points in the grid; if both m and d are specified, only m will be used}
-
-\item{grid}{locations of b_k; if left NULL the algorithm automatically selects them based on data and m or d}
-
 \item{control}{A list of control parameters  to be passed to the optimization function. `mixsqp` is  used.}
-
-\item{fitted_g}{if it is not NULL, then it is used to get posterior and loglikelihood}
-
-\item{seed}{random seed}
 }
 \value{
 A list containing elements:
@@ -36,7 +42,7 @@ A list containing elements:
 }
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) 
+with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) (or sum_k pi_k exp(1/b_k))
 b_k is selected to cover the lambda_i  of interest for all data  points x_i
 }
 \details{
@@ -48,6 +54,6 @@ ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
    x = rpois(100,beta) # simulate Poisson observations
    s = replicate(100,1)
    m = 2
-   out = ebpm::ebpm_exponential_mixture(x,s, m)
+   out = ebpm::ebpm_exponential_mixture(x,s)
    
 }

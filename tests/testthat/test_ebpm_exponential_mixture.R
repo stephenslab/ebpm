@@ -46,9 +46,14 @@ sim = simulate_pm(n, d)
 
 ## fit with ebpm_exponential_mixture
 m = 1.1
-fit =  ebpm::ebpm_exponential_mixture(sim$x, sim$s, m)
+fit       =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = NULL, fix_g = F, m = 2, control = NULL)
 
-fit_fixg <- ebpm::ebpm_exponential_mixture(sim$x, sim$s, fitted_g = fit$fitted_g)
+scale = list(a = fit$fitted_g$a, b = fit$fitted_g$b)
+fit_scale =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = scale, g_init = NULL, fix_g = F, m = 2, control = NULL)
+
+fit_init =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = fit$fitted_g, fix_g = F, m = 2, control = NULL)
+
+fit_fix =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = fit$fitted_g, fix_g = T, m = 2, control = NULL)
 
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {
@@ -60,9 +65,21 @@ test_that("RMSE: posterior  > MLE", {
   ## expect_gt(rmse(fit$posterior$mean, sim$lam_true), rmse(sim$x/sim$s, sim$lam_true)) ## this should  give error
 })
 
-test_that("test fix_g", {
-  expect_false(any(fit$posterior != fit_fixg$posterior) || 
-                 !all.equal(fit$log_likelihood, fit_fixg$log_likelihood,tolerance = 1e-5))
+
+test_that("test scale",{
+  expect_false(any(fit$fitted_g$a != fit_scale$fitted_g$a)||
+                 any(fit$fitted_g$b != fit_scale$fitted_g$b))
+})
+
+test_that("test init",{
+  expect_false(any(fit$fitted_g$a != fit_init$fitted_g$a)||
+                 any(fit$fitted_g$b != fit_init$fitted_g$b)||
+                 fit$log_likelihood > fit_init$log_likelihood)
+})
+
+test_that("test fix g", {
+  expect_false(any(fit$posterior != fit_fix$posterior) || 
+                 !all.equal(fit$log_likelihood, fit_fix$log_likelihood,tolerance = 1e-5))
 })
 
 

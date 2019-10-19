@@ -1,5 +1,7 @@
 # ebpm
 R package to fit tthe Empirical Bayes Poisson Means model.
+See model details and derivation in https://github.com/stephenslab/ebpm/blob/master/derivations/ebpm.pdf
+
 
 ## Quick Start
 

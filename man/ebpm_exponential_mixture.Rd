@@ -12,11 +12,10 @@ ebpm_exponential_mixture(x, s, scale = "estimate", g_init = NULL,
 
 \item{s}{A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.}
 
-\item{scale}{A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b}. It specifies the scale parameter(s) of the
-prior or \code{"estimate"} if the scale parameters are to be estimated
-from the data.}
+\item{scale}{Either \code{"estimate"} if the scale parameters are to be estimated
+from the data, or A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b} that specifies the  components of the mixture, where each pair of \code{a}, \code{b} described a \code{gamma(shape = a, rate = b)}.}
 
-\item{g_init}{The prior distribution \eqn{g}. Usually this is left
+\item{g_init}{The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 unspecified (\code{NULL}) and estimated from the data. However, it can be
 used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
 example, to do computations with the "true" \eqn{g} in simulations). If
@@ -42,7 +41,7 @@ A list containing elements:
 }
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-with Mixture of Exponential: g()  = sum_k pi_k gamma(1, b_k) (or sum_k pi_k exp(1/b_k))
+with Mixture of Exponential: \deqn{g()  = sum_k pi_k gamma(shape = 1, rate = b_k)} 
 b_k is selected to cover the lambda_i  of interest for all data  points x_i
 }
 \details{

@@ -27,7 +27,7 @@
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
 #'         means, and to add posterior log mean).}
-#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}, of class \code{gammamix}} 
 #'       \item{\code{log_likelihood}}{The optimal log likelihood attained
 #'         \eqn{L(\hat{g})}.}
 #'      }
@@ -41,11 +41,11 @@
 #' @export
 
 ## compute ebpm_exponential_mixture problem
-ebpm_exponential_mixture <- function(x,s, scale = "estimate", g_init = NULL, fix_g = F,m = 2, control =  NULL){
-  ## scale --> g_init by adding pi
+ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL){
+  if(length(s) == 1){s = replicate(length(x),s)}
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){
-    fix_g = F ## then automatically unfix g if specified so
+    fix_g = FALSE ## then automatically unfix g if specified so
     if(identical(scale, "estimate")){scale <- select_grid_exponential(x,s,m)}
     g_init = scale2gammamix_init(scale)
   }
@@ -69,7 +69,7 @@ ebpm_exponential_mixture <- function(x,s, scale = "estimate", g_init = NULL, fix
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
   }
-  fitted_g = list(pi = pi, a = a,  b  = b)
+  fitted_g = gammamix(pi = pi, a = a,  b  = b)
   log_likelihood = sum(log(exp(l_rowmax) * L %*%  pi))
   
   cpm = outer(x,a,  "+")/outer(s, b, "+")

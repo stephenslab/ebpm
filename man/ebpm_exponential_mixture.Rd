@@ -4,8 +4,8 @@
 \alias{ebpm_exponential_mixture}
 \title{Empirical Bayes Poisson Mean with Point Exponential  as Prior}
 \usage{
-ebpm_exponential_mixture(x, s, scale = "estimate", g_init = NULL,
-  fix_g = F, m = 2, control = NULL)
+ebpm_exponential_mixture(x, s = 1, scale = "estimate", g_init = NULL,
+  fix_g = FALSE, m = 2, control = NULL)
 }
 \arguments{
 \item{x}{A vector of Poisson observations.}
@@ -34,7 +34,7 @@ A list containing elements:
     \describe{
       \item{\code{posterior}}{A data frame of summary results (posterior
         means, and to add posterior log mean).}
-      \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+      \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}, of class \code{gammamix}} 
       \item{\code{log_likelihood}}{The optimal log likelihood attained
         \eqn{L(\hat{g})}.}
      }

@@ -19,3 +19,4 @@ s = replicate(100,1)
 out = ebpm_exponential_mixture(x,s,m=2)
 plot(x, out$posterior$mean)
 ```
+A vignette: https://zihao12.github.io/ebpmf_demo/vignette_ebpm.html

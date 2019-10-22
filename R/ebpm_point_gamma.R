@@ -8,10 +8,16 @@
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 #' @param x vector of Poisson observations.
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
-#' @param g_init vector of initialization for c(pi, a, b); default is c(0.5,1,1)
-#' @param fix_g whether to fix g at g_init or not; used  only  if g_init is not NULL
+#' @param g_init The prior distribution \eqn{g}, of the class \code{point_gamma}. Usually this is left
+#'   unspecified (\code{NULL}) and estimated from the data. However, it can be
+#'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
+#'   example, to do computations with the "true" \eqn{g} in simulations). If
+#'   \code{g_init} is specified but \code{fix_g = FALSE}, \code{g_init}
+#'   specifies the initial value of \eqn{g} used during optimization. 
+#' @param fix_g If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
+#'   of estimating it.
 #' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
-#' @param seed set seed (not necessary now)
+
 #' 
 #' @return A list containing elements:
 #'     \describe{
@@ -55,18 +61,14 @@
 
 ## TODO:
 ## consider the case where X are all  0s.   If  s are  not all 0, then pi* = 1, which is not reachable after transformation
-ebpm_point_gamma <- function(x, s, g_init = NULL, fix_g = F, control = NULL, seed = 123){
-  set.seed(seed) ## though seems determined
-  #if(!is.null(g_init)){browser()}
-  if(is.null(g_init)){g_init = c(0.5,1,1); fix_g =  F}
-  g_init = as.numeric(g_init)
-  
+ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, control = NULL){
+  if(length(s) == 1){s = replicate(length(x),s)}
+  if(is.null(control)){control = nlm_control_defaults()}
+  if(is.null(g_init)){g_init = point_gamma(0.5,1,1); fix_g =  F}
   if(!fix_g){
-    if(is.null(control)){control = nlm_control_defaults()}
     ## MLE
     fn_params = list(x = x, s = s)
     if(all(x  > 0)){ ## in  this case, optimal pi0 is 0, but is not reachable after a transformation in nlm
-      g_init = c(g_init[2],  g_init[3])
       opt = do.call(nlm, c(list(pg_nlm_fn_pi0, transform_param_pi0(g_init)), fn_params, control))
       log_likelihood =  -pg_nlm_fn_pi0(opt$estimate, x, s)
       opt_g = c(0, transform_param_back_pi0(opt$estimate))
@@ -76,15 +78,15 @@ ebpm_point_gamma <- function(x, s, g_init = NULL, fix_g = F, control = NULL, see
       opt_g = transform_param_back(opt$estimate)
     }
   }else{
-    opt_g = g_init
+    opt_g = as.numeric(g_init)
     log_likelihood =  ifelse(g_init[1] == 0, -pg_nlm_fn_pi0(transform_param_pi0(opt_g), x, s), -pg_nlm_fn(transform_param(opt_g), x, s))
   }
   
-  fitted_g = list(pi = opt_g[1], a = opt_g[2], b  = opt_g[3])
+  fitted_g = point_gamma(pi0 = opt_g[1], shape = opt_g[2], scale  = opt_g[3])
   ## posterior mean
-  pi = fitted_g$pi
-  a =  fitted_g$a
-  b =  fitted_g$b
+  pi = fitted_g$pi0
+  a =  fitted_g$shape
+  b =  1/fitted_g$scale
   nb = exp(dnbinom_cts_log_vec(x, a, prob = b/(b+s)))
   
   if(pi == 0){pi_hat = replicate(length(x),0)}
@@ -106,7 +108,6 @@ pg_nlm_fn_pi0 <- function(par, x, s){  ## for the case where x  > 0 for all a, a
   return(-sum(log(d)))
 }
 
-
 pg_nlm_fn <- function(par, x, s){
   #browser()
   pi = 1/(1+ exp(-par[1]))
@@ -125,11 +126,14 @@ dnbinom_cts_log_vec <- function(x, a, prob){
   return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
 }
 
+## par0: pi0,shape, scale
+## want: logit(pi0), log(shape), log(1/scale)
 transform_param <- function(par0){
+  par0 = as.numeric(par0)
   par = rep(0,length(par0))
   par[1] = log(par0[1]/(1-par0[1]))
   par[2] = log(par0[2])
-  par[3] = log(par0[3])
+  par[3] = - log(par0[3])
   return(par)
 }
 
@@ -137,21 +141,23 @@ transform_param_back <- function(par){
   par0 = rep(0,length(par))
   par0[1] = 1/(1+ exp(-par[1]))
   par0[2] = exp(par[2])
-  par0[3] = exp(par[3])
+  par0[3] = exp(- par[3])
   return(par0)
 }
 
 transform_param_pi0 <- function(par0){
+  ## only need to optimize over shape, scale
+  par0 = c(par0$shape, par0$scale)
   par = rep(0,length(par0))
   par[1] = log(par0[1])
-  par[2] = log(par0[2])
+  par[2] = - log(par0[2])
   return(par)
 }
 
 transform_param_back_pi0 <- function(par){
   par0 = rep(0,length(par))
   par0[1] = exp(par[1])
-  par0[2] = exp(par[2])
+  par0[2] = exp(- par[2])
   return(par0)
 }
 

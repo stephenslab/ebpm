@@ -25,8 +25,8 @@ expect_false(is.nan(out$log_likelihood))
 data = readRDS("../../data/ebpmf_point_issue5.Rds")
 x = data$x
 s =  data$s
-out1 = ebpm_point_gamma(x, s, c(0.5,1,1))
-out2 = ebpm_point_gamma(x, s, c(0.5,1.64,1))
+out1 = ebpm_point_gamma(x, s, point_gamma(0.5,1,1))
+out2 = ebpm_point_gamma(x, s, point_gamma(0.5,1.64,1))
 expect_equal(out1$log_likelihood, out2$log_likelihood)
 
 

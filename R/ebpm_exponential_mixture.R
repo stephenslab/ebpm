@@ -9,7 +9,7 @@
 #' @param x A vector of Poisson observations.
 #' @param s A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.
 #' @param scale Either \code{"estimate"} if the scale parameters are to be estimated
-#'   from the data, or A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b} that specifies the  components of the mixture, where each pair of \code{a}, \code{b} described a \code{gamma(shape = a, rate = b)}. 
+#'   from the data, or A list of  \code{shape} (set to all 1s for exponential mixture) and  \code{scale} that specifies the  components of the mixture, where each pair of \code{shape}, \code{scale} described a \code{gamma(shape, scale)}. 
 #' @param g_init The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 #'   unspecified (\code{NULL}) and estimated from the data. However, it can be
 #'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
@@ -51,8 +51,8 @@ ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL
   }
   
   if(!fix_g){ ## need to estimate g_init
-    b = g_init$b
-    a = g_init$a
+    b = 1/g_init$scale ##  from here use gamma(shape = a, rate = b)  where E = a/b
+    a = g_init$shape
     tmp <-  compute_L(x,s,a, b)
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
@@ -62,14 +62,14 @@ ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL
   }
   else{
     pi = g_init$pi
-    a = g_init$a
-    b = g_init$b
+    a = g_init$shape
+    b = 1/g_init$scale
     ## compute loglikelihood
     tmp <-  compute_L(x,s,a, b)
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
   }
-  fitted_g = gammamix(pi = pi, a = a,  b  = b)
+  fitted_g = gammamix(pi = pi, shape = a,  scale  = 1/b)
   log_likelihood = sum(log(exp(l_rowmax) * L %*%  pi))
   
   cpm = outer(x,a,  "+")/outer(s, b, "+")
@@ -107,7 +107,7 @@ select_grid_exponential <- function(x, s, m = 2, d = NULL){
   mu_grid = geom_seq(mu_grid_min, mu_grid_max, m)
   b = 1/mu_grid
   a = rep(1, length(b))
-  return(list(a = a, b = b))
+  return(list(shape = a, scale = 1/b))
 }
 
 ## compute L matrix from data and selected grid

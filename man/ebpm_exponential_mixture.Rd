@@ -13,7 +13,7 @@ ebpm_exponential_mixture(x, s = 1, scale = "estimate", g_init = NULL,
 \item{s}{A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.}
 
 \item{scale}{Either \code{"estimate"} if the scale parameters are to be estimated
-from the data, or A list of  \code{a} (set to all 1s for exponential mixture) and  \code{b} that specifies the  components of the mixture, where each pair of \code{a}, \code{b} described a \code{gamma(shape = a, rate = b)}.}
+from the data, or A list of  \code{shape} (set to all 1s for exponential mixture) and  \code{scale} that specifies the  components of the mixture, where each pair of \code{shape}, \code{scale} described a \code{gamma(shape, scale)}.}
 
 \item{g_init}{The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 unspecified (\code{NULL}) and estimated from the data. However, it can be

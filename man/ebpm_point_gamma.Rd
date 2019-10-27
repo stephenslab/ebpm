@@ -5,7 +5,7 @@
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
 ebpm_point_gamma(x, s = 1, g_init = NULL, fix_g = F,
-  control = NULL)
+  pi0 = "estimate", control = NULL)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
@@ -22,6 +22,8 @@ specifies the initial value of \eqn{g} used during optimization.}
 \item{fix_g}{If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
 of estimating it.}
 
+\item{pi0}{Either  \code{"estimate"} which optimizes over pi0 along with  shape and scale, or a number in \code{[0,1]} that fixes pi0}
+
 \item{control}{A list of control parameters  to be passed to the optimization function. `nlm` is  used.}
 }
 \value{
@@ -36,10 +38,10 @@ A list containing elements:
 }
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
+with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(shape, scale)
 }
 \details{
-The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, a, b)
+The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, shape, scale)
 ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 }
 \examples{

@@ -6,5 +6,5 @@
 #'
 #' @export 
 point_gamma <- function(pi0, shape, scale) {
-  structure(data.frame(pi0 = pi0, shape = shape, scale = scale), class="gammamix")
+  structure(data.frame(pi0 = pi0, shape = shape, scale = scale), class="point_gamma")
 }

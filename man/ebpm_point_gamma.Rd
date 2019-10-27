@@ -4,28 +4,32 @@
 \alias{ebpm_point_gamma}
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
-ebpm_point_gamma(x, s, g_init = NULL, fix_g = F, control = NULL,
-  seed = 123)
+ebpm_point_gamma(x, s = 1, g_init = NULL, fix_g = F,
+  control = NULL)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
 
 \item{s}{vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.}
 
-\item{g_init}{vector of initialization for c(pi, a, b); default is c(0.5,1,1)}
+\item{g_init}{The prior distribution \eqn{g}, of the class \code{point_gamma}. Usually this is left
+unspecified (\code{NULL}) and estimated from the data. However, it can be
+used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
+example, to do computations with the "true" \eqn{g} in simulations). If
+\code{g_init} is specified but \code{fix_g = FALSE}, \code{g_init}
+specifies the initial value of \eqn{g} used during optimization.}
 
-\item{fix_g}{whether to fix g at g_init or not; used  only  if g_init is not NULL}
+\item{fix_g}{If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
+of estimating it.}
 
 \item{control}{A list of control parameters  to be passed to the optimization function. `nlm` is  used.}
-
-\item{seed}{set seed (not necessary now)}
 }
 \value{
 A list containing elements:
     \describe{
       \item{\code{posterior}}{A data frame of summary results (posterior
         means, and to add posterior log mean).}
-      \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+      \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}} of class \code{point_gamma}} 
       \item{\code{log_likelihood}}{The optimal log likelihood attained
         \eqn{L(\hat{g})}.}
      }

@@ -1,10 +1,10 @@
 #' @title Empirical Bayes Poisson Mean with Point Gamma  as Prior
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
-#' with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(a, b)
+#' with Point Gamma: g()  = pi_0 delta() + (1-pi_0) gamma(shape, scale)
 #' 
 #' @import stats
 
-#' @details The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, a, b)
+#' @details The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over pi_0, shape, scale)
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 #' @param x vector of Poisson observations.
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
@@ -16,6 +16,7 @@
 #'   specifies the initial value of \eqn{g} used during optimization. 
 #' @param fix_g If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
 #'   of estimating it.
+#' @param pi0 Either  \code{"estimate"} which optimizes over pi0 along with  shape and scale, or a number in \code{[0,1]} that fixes pi0
 #' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
 
 #' 
@@ -23,7 +24,7 @@
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
 #'         means, and to add posterior log mean).}
-#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}} 
+#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}} of class \code{point_gamma}} 
 #'       \item{\code{log_likelihood}}{The optimal log likelihood attained
 #'         \eqn{L(\hat{g})}.}
 #'      }
@@ -61,27 +62,36 @@
 
 ## TODO:
 ## consider the case where X are all  0s.   If  s are  not all 0, then pi* = 1, which is not reachable after transformation
-ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, control = NULL){
+ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate",control = NULL){
   if(length(s) == 1){s = replicate(length(x),s)}
   if(is.null(control)){control = nlm_control_defaults()}
   if(is.null(g_init)){g_init = point_gamma(0.5,1,1); fix_g =  F}
   if(!fix_g){
     ## MLE
-    fn_params = list(x = x, s = s)
-    if(all(x  > 0)){ ## in  this case, optimal pi0 is 0, but is not reachable after a transformation in nlm
-      opt = do.call(nlm, c(list(pg_nlm_fn_pi0, transform_param_pi0(g_init)), fn_params, control))
-      log_likelihood =  -pg_nlm_fn_pi0(opt$estimate, x, s)
-      opt_g = c(0, transform_param_back_pi0(opt$estimate))
-    }else{
-      opt = do.call(nlm, c(list(pg_nlm_fn, transform_param(g_init)), fn_params, control))
-      log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
-      opt_g = transform_param_back(opt$estimate)
+    if(identical(pi0, "estimate")){
+      if(!all(x  > 0)){
+        fn_params = list(x = x, s = s)
+        opt = do.call(nlm, c(list(pg_nlm_fn, transform_param(g_init)), fn_params, control))
+        log_likelihood =  -pg_nlm_fn(opt$estimate, x, s)
+        opt_g = transform_param_back(opt$estimate)
+      }else{  ## in  this case, optimal pi0 is 0, but is not reachable after a transformation in nlm; so fix pi0 at 0
+        pi0 = 0
+        fn_params = list(x = x, s = s, pi0 = pi0)
+        opt = do.call(nlm, c(list(pg_nlm_fn_fix_pi0, transform_param_fix_pi0(g_init)), fn_params, control))
+        log_likelihood =  -pg_nlm_fn_fix_pi0(opt$estimate, x, s, pi0)
+        opt_g = c(pi0, transform_param_back_fix_pi0(opt$estimate))
+      }
+    }else{ ## fix pi0
+      pi0 = as.numeric(pi0)
+      fn_params = list(x = x, s = s, pi0 = pi0)
+      opt = do.call(nlm, c(list(pg_nlm_fn_fix_pi0, transform_param_fix_pi0(g_init)), fn_params, control))
+      log_likelihood =  -pg_nlm_fn_fix_pi0(opt$estimate, x, s, pi0)
+      opt_g = c(pi0, transform_param_back_fix_pi0(opt$estimate))
     }
-  }else{
-    opt_g = as.numeric(g_init)
-    log_likelihood =  ifelse(g_init[1] == 0, -pg_nlm_fn_pi0(transform_param_pi0(opt_g), x, s), -pg_nlm_fn(transform_param(opt_g), x, s))
+  }else{ ## fix_g = T
+      opt_g = as.numeric(g_init)
+      log_likelihood =  ifelse( g_init$pi0 == 0, -pg_nlm_fn_pi0(transform_param_pi0(opt_g), x, s), -pg_nlm_fn(transform_param(opt_g), x, s))
   }
-  
   fitted_g = point_gamma(pi0 = opt_g[1], shape = opt_g[2], scale  = opt_g[3])
   ## posterior mean
   pi = fitted_g$pi0
@@ -100,13 +110,25 @@ ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, control = NULL)
   return(list(fitted_g = fitted_g, posterior = posterior, log_likelihood = log_likelihood))
 }
 
-pg_nlm_fn_pi0 <- function(par, x, s){  ## for the case where x  > 0 for all a, and optimal pi0 is 0
-  a  =  exp(par[1])
-  b  =  exp(par[2])
+# pg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){  ## for the case where x  > 0 for all a, and optimal pi0 is 0
+#   n = length(x)
+#   a  =  exp(par[1])
+#   b  =  exp(par[2])
+#   d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
+#   #if(is.nan(sum(log(pi * c + d)))){browser()}
+#   return(-sum(log(d)) - n * log(1-pi0))
+# }
+
+pg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){
+  pi = pi0
+  a  = exp(par[1])
+  b  = exp(par[2])
   d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
-  #if(is.nan(sum(log(pi * c + d)))){browser()}
-  return(-sum(log(d)))
+  c = as.integer(x ==  0) - d
+  return(-sum(log(pi*c + d)))
 }
+
+
 
 pg_nlm_fn <- function(par, x, s){
   #browser()
@@ -145,7 +167,7 @@ transform_param_back <- function(par){
   return(par0)
 }
 
-transform_param_pi0 <- function(par0){
+transform_param_fix_pi0 <- function(par0){
   ## only need to optimize over shape, scale
   par0 = c(par0$shape, par0$scale)
   par = rep(0,length(par0))
@@ -154,7 +176,7 @@ transform_param_pi0 <- function(par0){
   return(par)
 }
 
-transform_param_back_pi0 <- function(par){
+transform_param_back_fix_pi0 <- function(par){
   par0 = rep(0,length(par))
   par0[1] = exp(par[1])
   par0[2] = exp(- par[2])

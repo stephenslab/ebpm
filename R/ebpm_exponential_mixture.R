@@ -41,12 +41,12 @@
 #' @export
 
 ## compute ebpm_exponential_mixture problem
-ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL){
+ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
   if(length(s) == 1){s = replicate(length(x),s)}
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){
     fix_g = FALSE ## then automatically unfix g if specified so
-    if(identical(scale, "estimate")){scale <- select_grid_exponential(x,s,m)}
+    if(identical(scale, "estimate")){scale <- select_grid_exponential(x,s,m, low)}
     g_init = scale2gammamix_init(scale)
   }
   
@@ -94,7 +94,7 @@ geom_seq <- function(low, up, m){
 # }
 
 ## select grid for b_k
-select_grid_exponential <- function(x, s, m = 2, d = NULL){
+select_grid_exponential <- function(x, s, m = 2, d = NULL, low = NULL){
   ## mu_grid: mu =  1/b is the exponential mean
   xprime = x
   xprime[x == 0] = xprime[x == 0] + 1
@@ -104,10 +104,25 @@ select_grid_exponential <- function(x, s, m = 2, d = NULL){
     if(is.null(d)){m = 2}
     else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
   }
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
   mu_grid = geom_seq(mu_grid_min, mu_grid_max, m)
-  b = 1/mu_grid
-  a = rep(1, length(b))
-  return(list(shape = a, scale = 1/b))
+  a = rep(1, length(mu_grid))
+  return(list(shape = a, scale = mu_grid))
+}
+
+
+
+#' @export get_uniform_mixture
+get_uniform_mixture <- function(x, s, grid_res = NULL, m = 2, low = NULL){
+  if(is.null(grid_res)){
+    grid_res = select_grid_exponential(x = x, s = s, m = m, low = low)
+  }
+  shape = grid_res$shape
+  scale = grid_res$scale
+  n = length(shape)
+  pi = replicate(n, 1/n)
+  g = gammamix(pi = pi, shape = shape, scale = scale)
+  return(g)
 }
 
 ## compute L matrix from data and selected grid

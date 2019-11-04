@@ -50,7 +50,7 @@ ebpm_exponential_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL
     g_init = scale2gammamix_init(scale)
   }
   
-  if(!fix_g){ ## need to estimate g_init
+  if(!fix_g){ ## need to estimate g_hat
     b = 1/g_init$scale ##  from here use gamma(shape = a, rate = b)  where E = a/b
     a = g_init$shape
     tmp <-  compute_L(x,s,a, b)
@@ -128,6 +128,7 @@ get_uniform_mixture <- function(x, s, grid_res = NULL, m = 2, low = NULL){
 ## compute L matrix from data and selected grid
 ## L_ik = NB(x_i; a_k, b_k/b_k + s_i)
 ## but for computation in mixsqr, we can simplyfy it for numerical stability
+#' @export compute_L
 compute_L <- function(x, s, a, b){
   prob = 1 - s/outer(s,b, "+")
   l = dnbinom_cts_log(x,a,prob = prob) ## 

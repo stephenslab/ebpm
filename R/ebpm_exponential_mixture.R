@@ -139,9 +139,17 @@ compute_L <- function(x, s, a, b){
 
 # it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
 dnbinom_cts_log <- function(x, a, prob){
+  tmp = x*log(1-prob) 
+  tmp[x == 0] = 0 ## R says 0*-Inf = NaN
+  out = t(t(log(prob)) * a) + tmp + lgamma(outer(x, a, "+")) - lgamma(x+1)
+  out = t(t(out) - lgamma(a))
+  return(out)
+}
+
+dnbinom_cts_log_1d <- function(x, a, prob){
   tmp = x*log(1-prob)
   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
-  return(a*log(prob) + tmp + lgamma(outer(x, a, "+")) - lgamma(x+1) - lgamma(a))
+  return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
 }
 
 

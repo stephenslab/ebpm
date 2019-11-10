@@ -45,23 +45,29 @@ select_grid_exponential <- function(x, s, m = 2, d = NULL, low = NULL){
 }
 
 ## select grid for a_k
-select_grid_gamma <- function(x, s, m = 2, d = NULL, low = NULL){
+select_grid_gamma <- function(x, s, m = 2, d = NULL, low = NULL, theta = "one"){
   #if(length(x) != length(s)){browser()}
   ## mu_grid: mu =  1/b is the exponential mean
+  
+  #browser()
+  if(identical(theta, "one")){theta = 1}
+  if(identical(theta, "max")){theta = max(x)/s[1]}
+  
   xprime = x
   xprime[x == 0] = xprime[x == 0] + 1
-  mu_grid_min =  0.05*min(xprime/s)
-  mu_grid_max = 2*max(x/s)
+  mu_grid_min =  0.05*min(theta * xprime/s)
+  mu_grid_max = 2*max(theta * x/s)
   if(is.null(m)){
     if(is.null(d)){m = 2}
     else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
   }
-  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
   
+  ## some specification of mu_grid_min
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
   mu_grid_min = max(1e-50, mu_grid_min)
   
   shape = geom_seq(mu_grid_min, mu_grid_max, m)
-  scale = rep(1, length(shape))
+  scale = rep(theta, length(shape))
   return(list(shape = shape, scale = scale))
 }
 

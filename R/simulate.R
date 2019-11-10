@@ -3,6 +3,7 @@
 #' @import gtools
 
 ## simulate a poisson mean problem from mixture of exponential
+#' @export simulate_pois_expmix
 simulate_pois_expmix  <-  function(n,seed = 123){
   set.seed(seed)
   ## simulate grid

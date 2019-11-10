@@ -1,4 +1,4 @@
-#' @title Empirical Bayes Poisson Mean with Mixture of Gamma as Prior (still in development)
+#' @title Empirical Bayes Poisson Mean with Mixture of Gamma as Prior (choosing one scale and varying shape)
 #' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
 #' with Mixture of Exponential: \deqn{g()  = sum_k pi_k gamma(shape = 1, rate = b_k)} 
 #' b_k is selected to cover the lambda_i  of interest for all data  points x_i
@@ -41,7 +41,8 @@
 #' @export
 
 ## compute ebpm_gamma_mixture problem
-ebpm_gamma_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
+ebpm_gamma_mixture_single_scale <- function(x,s = 1,  scale = "estimate", theta = "max", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
+  #browser()
   ## a quick  fix when all `x` are 0
   if(max(x) == 0){
     return(ebpm_point_gamma(x = x, s = s, g_init = g_init, fix_g = fix_g))
@@ -50,7 +51,7 @@ ebpm_gamma_mixture <- function(x,s = 1,  scale = "estimate", g_init = NULL, fix_
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){
     fix_g = FALSE ## then automatically unfix g if specified so
-    if(identical(scale, "estimate")){scale <- select_grid_gamma(x,s,m, low)}
+    if(identical(scale, "estimate")){scale <- select_grid_gamma(x = x,s = s,m = m, low = low, theta = theta)}
     g_init = scale2gammamix_init(scale)
   }
   

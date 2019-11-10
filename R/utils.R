@@ -55,8 +55,8 @@ select_grid_gamma <- function(x, s, m = 2, d = NULL, low = NULL, theta = "one"){
   
   xprime = x
   xprime[x == 0] = xprime[x == 0] + 1
-  mu_grid_min =  0.05*min(theta * xprime/s)
-  mu_grid_max = 2*max(theta * x/s)
+  mu_grid_min =  0.05*min((1/theta) * xprime/s) ## same as x/s_0
+  mu_grid_max = 2*max((1/theta) * x/s)
   if(is.null(m)){
     if(is.null(d)){m = 2}
     else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}

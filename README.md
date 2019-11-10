@@ -21,4 +21,3 @@ plot(x, out$posterior$mean)
 ```
 vignettes: 
 https://zihao12.github.io/ebpmf_demo/vignette_ebpm.html
-https://zihao12.github.io/ebpmf_demo/vignette_ebpm2.html

@@ -53,6 +53,7 @@ ebpm_gamma_mixture_single_scale <- function(x,s = 1,  shape = "estimate", scale 
   if(is.null(g_init)){
     fix_g = FALSE ## then automatically unfix g if specified so
     if(identical(scale, "max")){scale = max(x/s)}
+    else{if(identical(scale, "estimate")){stop("the option `scale=estimate` is not implemented for gamma mixtures")}}
     if(identical(shape, "estimate")){shape =  select_shape_gamma(x  = x, s = s, scale = scale, m = m, d = NULL, low = low)}
     g_init = scale2gammamix_init(list(shape = shape, scale =  replicate(length(shape),scale)))
   }

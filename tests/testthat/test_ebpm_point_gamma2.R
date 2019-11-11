@@ -2,8 +2,8 @@ context("Previous Issues in ebpmf::ebpmf_point_gamma")
 data = readRDS("../../data/ebpmf_gamma_issue.Rds")
 x = data$x
 s = data$s
-init_par = c(0.1,10,10)
-out = ebpm::ebpm_point_gamma(x, s, init_par)
+init_par = point_gamma(pi0 = 0.1,shape = 10,scale= 1/10)
+out = ebpm::ebpm_point_gamma(x, s, g_init = init_par)
 expect_false(is.nan(out$log_likelihood))
 
 

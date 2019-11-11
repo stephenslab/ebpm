@@ -34,11 +34,22 @@ sim = simulate_pm(s, param)
 
 fit <- ebpm::ebpm_point_gamma(sim$x, sim$s)
 
+fit_fixpi <- ebpm::ebpm_point_gamma(sim$x, sim$s, pi0 = pi)
+
+
 fit_fixg <- ebpm::ebpm_point_gamma(sim$x, sim$s, g_init = fit$fitted_g, fix_g = T)
 
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {
   expect_gt(fit$log_likelihood, sim$log_likelihood)
+})
+
+test_that("RMSE: posterior  > MLE when fix pi0 at truth", {
+  expect_lt(rmse(fit_fixg$posterior$mean, sim$lam_true), rmse(sim$x/sim$s, sim$lam_true))
+})
+
+test_that("fitted loglikelihood > simulated  loglikelihood  when fix pi0 at truth", {
+  expect_gt(fit_fixg$log_likelihood, sim$log_likelihood)
 })
 
 test_that("RMSE: posterior  > MLE", {

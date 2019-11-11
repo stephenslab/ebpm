@@ -24,53 +24,6 @@ geom_seq <- function(low, up, m){
 #   return(out)
 # }
 
-## select grid for b_k
-select_grid_exponential <- function(x, s, m = 2, d = NULL, low = NULL){
-  ## mu_grid: mu =  1/b is the exponential mean
-  xprime = x
-  xprime[x == 0] = xprime[x == 0] + 1
-  mu_grid_min =  0.05*min(xprime/s)
-  mu_grid_max = 2*max(x/s)
-  if(is.null(m)){
-    if(is.null(d)){m = 2}
-    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
-  }
-  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
-  
-  mu_grid_min = max(1e-50, mu_grid_min)
-
-  mu_grid = geom_seq(mu_grid_min, mu_grid_max, m)
-  a = rep(1, length(mu_grid))
-  return(list(shape = a, scale = mu_grid))
-}
-
-## select grid for a_k
-select_grid_gamma <- function(x, s, m = 2, d = NULL, low = NULL, theta = "one"){
-  #if(length(x) != length(s)){browser()}
-  ## mu_grid: mu =  1/b is the exponential mean
-  
-  #browser()
-  if(identical(theta, "one")){theta = 1}
-  if(identical(theta, "max")){theta = max(x)/s[1]}
-  
-  xprime = x
-  xprime[x == 0] = xprime[x == 0] + 1
-  mu_grid_min =  0.05*min((1/theta) * xprime/s) ## same as x/s_0
-  mu_grid_max = 2*max((1/theta) * x/s)
-  if(is.null(m)){
-    if(is.null(d)){m = 2}
-    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
-  }
-  
-  ## some specification of mu_grid_min
-  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
-  mu_grid_min = max(1e-50, mu_grid_min)
-  
-  shape = geom_seq(mu_grid_min, mu_grid_max, m)
-  scale = rep(theta, length(shape))
-  return(list(shape = shape, scale = scale))
-}
-
 
 
 #' @export get_uniform_mixture
@@ -111,6 +64,92 @@ dnbinom_cts_log_1d <- function(x, a, prob){
   tmp = x*log(1-prob)
   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
   return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
+}
+
+
+select_shape_gamma <- function(x, s, scale, m = 2, d = NULL, low = NULL){
+  xprime = x
+  xprime[x == 0] = xprime[x == 0] + 1
+  mu_grid_min =  0.05*min((1/scale) * xprime/s) 
+  mu_grid_max = 2*max((1/scale) * x/s)
+  if(is.null(m)){
+    if(is.null(d)){m = 2}
+    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
+  }
+  
+  ## some specification of mu_grid_min
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
+  mu_grid_min = max(1e-50, mu_grid_min)
+  
+  shape = geom_seq(mu_grid_min, mu_grid_max, m)
+  return(shape)
+}
+
+
+select_scale_exponential <- function(x, s, m = 2, d = NULL, low = NULL){
+  ## mu_grid: mu =  1/b is the exponential mean
+  xprime = x
+  xprime[x == 0] = xprime[x == 0] + 1
+  mu_grid_min =  0.05*min(xprime/s)
+  mu_grid_max = 2*max(x/s)
+  if(is.null(m)){
+    if(is.null(d)){m = 2}
+    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
+  }
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
+  mu_grid_min = max(1e-50, mu_grid_min)
+  scale = geom_seq(mu_grid_min, mu_grid_max, m)
+  return(scale)
+}
+
+
+
+##=====================functions used in  older versions=============================
+## select grid for b_k
+select_grid_exponential <- function(x, s, m = 2, d = NULL, low = NULL){
+  ## mu_grid: mu =  1/b is the exponential mean
+  xprime = x
+  xprime[x == 0] = xprime[x == 0] + 1
+  mu_grid_min =  0.05*min(xprime/s)
+  mu_grid_max = 2*max(x/s)
+  if(is.null(m)){
+    if(is.null(d)){m = 2}
+    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
+  }
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
+  
+  mu_grid_min = max(1e-50, mu_grid_min)
+  
+  mu_grid = geom_seq(mu_grid_min, mu_grid_max, m)
+  a = rep(1, length(mu_grid))
+  return(list(shape = a, scale = mu_grid))
+}
+
+## select grid for a_k
+select_grid_gamma <- function(x, s, m = 2, d = NULL, low = NULL, theta = "one"){
+  #if(length(x) != length(s)){browser()}
+  ## mu_grid: mu =  1/b is the exponential mean
+  
+  #browser()
+  if(identical(theta, "one")){theta = 1}
+  if(identical(theta, "max")){theta = max(x)/s[1]}
+  
+  xprime = x
+  xprime[x == 0] = xprime[x == 0] + 1
+  mu_grid_min =  0.05*min((1/theta) * xprime/s) ## same as x/s_0
+  mu_grid_max = 2*max((1/theta) * x/s)
+  if(is.null(m)){
+    if(is.null(d)){m = 2}
+    else{m = ceiling((mu_grid_max/mu_grid_min)^(1/(d-1)))}
+  }
+  
+  ## some specification of mu_grid_min
+  if(!is.null(low)){mu_grid_min = min(low, mu_grid_min)}
+  mu_grid_min = max(1e-50, mu_grid_min)
+  
+  shape = geom_seq(mu_grid_min, mu_grid_max, m)
+  scale = rep(theta, length(shape))
+  return(list(shape = shape, scale = scale))
 }
 
 

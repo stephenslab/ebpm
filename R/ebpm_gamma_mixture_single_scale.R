@@ -8,8 +8,9 @@
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 #' @param x A vector of Poisson observations.
 #' @param s A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.
-#' @param scale Either \code{"estimate"} if the scale parameters are to be estimated
-#'   from the data, or A list of  \code{shape} (set to all 1s for exponential mixture) and  \code{scale} that specifies the  components of the mixture, where each pair of \code{shape}, \code{scale} described a \code{gamma(shape, scale)}. 
+#' @param scale  Either a scalar or \code{"max"}, which uses \code{max(x/s)} as scale. 
+#'   This specifies the scale used in all grids in the mixture of gammas.
+#' @param shape Either a vector, or "estimate", which finds grid for shape that makes the range the prior mean cover all \code{x/s}
 #' @param g_init The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 #'   unspecified (\code{NULL}) and estimated from the data. However, it can be
 #'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
@@ -41,7 +42,7 @@
 #' @export
 
 ## compute ebpm_gamma_mixture problem
-ebpm_gamma_mixture_single_scale <- function(x,s = 1,  scale = "estimate", theta = "max", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
+ebpm_gamma_mixture_single_scale <- function(x,s = 1,  shape = "estimate", scale = "max", g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
   #browser()
   ## a quick  fix when all `x` are 0
   if(max(x) == 0){
@@ -51,8 +52,9 @@ ebpm_gamma_mixture_single_scale <- function(x,s = 1,  scale = "estimate", theta 
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){
     fix_g = FALSE ## then automatically unfix g if specified so
-    if(identical(scale, "estimate")){scale <- select_grid_gamma(x = x,s = s,m = m, low = low, theta = theta)}
-    g_init = scale2gammamix_init(scale)
+    if(identical(scale, "max")){scale = max(x/s)}
+    if(identical(shape, "estimate")){shape =  select_shape_gamma(x  = x, s = s, scale = scale, m = m, d = NULL, low = low)}
+    g_init = scale2gammamix_init(list(shape = shape, scale =  replicate(length(shape),scale)))
   }
   
   if(!fix_g){ ## need to estimate g_hat

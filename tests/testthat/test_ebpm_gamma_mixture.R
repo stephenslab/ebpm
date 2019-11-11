@@ -1,4 +1,4 @@
-context("test_ebpm_gamma_mixture_single_scale")
+context("test_ebpm_exponential_mixture")
 library(gtools)
 ## testing setup
 sim_mgamma <- function(a,b,pi){
@@ -44,17 +44,18 @@ d =  20
 sim = simulate_pm(n, d)
 
 
-## fit with ebpm_gamma_mixture_single_scale
+## fit with ebpm_exponential_mixture
 m = 1.1
 
-fit       =  ebpm::ebpm_gamma_mixture_single_scale(x = sim$x, s = sim$s, shape = "estimate", scale = "max", g_init = NULL, fix_g = F, m = 2, control = NULL)
+fit       =  ebpm::ebpm_gamma_mixture_single_scale(x = sim$x, s = sim$s, shape = "estimate", scale = "max",g_init = NULL, fix_g = F, m = 2, control = NULL)
 
-fit_scale =  ebpm::ebpm_gamma_mixture_single_scale(x = sim$x, s = sim$s, 
-                                                   shape =  fit$fitted_g$shape, scale = fit$fitted_g$scale[1], g_init = NULL, fix_g = F, m = 2, control = NULL)
+fit_scale =  ebpm::ebpm_gamma_mixture(x = sim$x, s = sim$s, 
+                                      shape = fit$fitted_g$shape, scale = fit$fitted_g$scale,
+                                      g_init = NULL, fix_g = F, m = 2, control = NULL)
 
-fit_init =  ebpm::ebpm_gamma_mixture_single_scale(x = sim$x, s = sim$s, g_init = fit$fitted_g, fix_g = F, m = 2, control = NULL)
+fit_init =  ebpm::ebpm_gamma_mixture(x = sim$x, s = sim$s, g_init = fit$fitted_g, fix_g = F, m = 2, control = NULL)
 
-fit_fix =  ebpm::ebpm_gamma_mixture_single_scale(x = sim$x, s = sim$s, g_init = fit$fitted_g, fix_g = T, m = 2, control = NULL)
+fit_fix =  ebpm::ebpm_gamma_mixture(x = sim$x, s = sim$s, g_init = fit$fitted_g, fix_g = T, m = 2, control = NULL)
 
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {

@@ -49,12 +49,11 @@ m = 1.1
 
 fit       =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = NULL, fix_g = F, m = 2, control = NULL)
 
-scale = list(shape = fit$fitted_g$shape, scale = 1/fit$fitted_g$scale)
-fit_scale =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = scale, g_init = NULL, fix_g = F, m = 2, control = NULL)
+fit_scale =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = fit$fitted_g$scale, g_init = NULL, fix_g = F, m = 2, control = NULL)
 
-fit_init =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = fit$fitted_g, fix_g = F, m = 2, control = NULL)
+fit_init =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, g_init = fit$fitted_g, fix_g = F, m = 2, control = NULL)
 
-fit_fix =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s, scale = "estimate", g_init = fit$fitted_g, fix_g = T, m = 2, control = NULL)
+fit_fix =  ebpm::ebpm_exponential_mixture(x = sim$x, s = sim$s,  g_init = fit$fitted_g, fix_g = T, m = 2, control = NULL)
 
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {

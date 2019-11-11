@@ -4,16 +4,17 @@
 \alias{ebpm_gamma_mixture}
 \title{Empirical Bayes Poisson Mean with Mixture of Gamma as Prior (still in development)}
 \usage{
-ebpm_gamma_mixture(x, s = 1, scale = "estimate", g_init = NULL,
-  fix_g = FALSE, m = 2, control = NULL, low = NULL)
+ebpm_gamma_mixture(x, s, shape, scale, g_init = NULL, fix_g = FALSE,
+  m = 2, control = NULL, low = NULL)
 }
 \arguments{
 \item{x}{A vector of Poisson observations.}
 
 \item{s}{A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.}
 
-\item{scale}{Either \code{"estimate"} if the scale parameters are to be estimated
-from the data, or A list of  \code{shape} (set to all 1s for exponential mixture) and  \code{scale} that specifies the  components of the mixture, where each pair of \code{shape}, \code{scale} described a \code{gamma(shape, scale)}.}
+\item{shape}{A vector specifying the shapes used in gamma mixtures}
+
+\item{scale}{A vector specifying the scales used in gamma mixtures}
 
 \item{g_init}{The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 unspecified (\code{NULL}) and estimated from the data. However, it can be

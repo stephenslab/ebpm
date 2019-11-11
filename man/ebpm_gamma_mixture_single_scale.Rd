@@ -4,8 +4,8 @@
 \alias{ebpm_gamma_mixture_single_scale}
 \title{Empirical Bayes Poisson Mean with Mixture of Gamma as Prior (choosing one scale and varying shape)}
 \usage{
-ebpm_gamma_mixture_single_scale(x, s = 1, scale = "estimate",
-  theta = "max", g_init = NULL, fix_g = FALSE, m = 2,
+ebpm_gamma_mixture_single_scale(x, s = 1, shape = "estimate",
+  scale = "max", g_init = NULL, fix_g = FALSE, m = 2,
   control = NULL, low = NULL)
 }
 \arguments{
@@ -13,8 +13,10 @@ ebpm_gamma_mixture_single_scale(x, s = 1, scale = "estimate",
 
 \item{s}{A vector of scaling factors for Poisson observations: the model is \eqn{y[j]~Pois(s[j]*lambda[j])}.}
 
-\item{scale}{Either \code{"estimate"} if the scale parameters are to be estimated
-from the data, or A list of  \code{shape} (set to all 1s for exponential mixture) and  \code{scale} that specifies the  components of the mixture, where each pair of \code{shape}, \code{scale} described a \code{gamma(shape, scale)}.}
+\item{shape}{Either a vector, or "estimate", which finds grid for shape that makes the range the prior mean cover all \code{x/s}}
+
+\item{scale}{Either a scalar or \code{"max"}, which uses \code{max(x/s)} as scale. 
+This specifies the scale used in all grids in the mixture of gammas.}
 
 \item{g_init}{The prior distribution \eqn{g}, of the class \code{gammamix}. Usually this is left
 unspecified (\code{NULL}) and estimated from the data. However, it can be

@@ -66,6 +66,7 @@ ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate
   if(length(s) == 1){s = replicate(length(x),s)}
   if(is.null(control)){control = nlm_control_defaults()}
   if(is.null(g_init)){g_init = point_gamma(0.5,1,1); fix_g =  F}
+  #browser()
   if(!fix_g){
     ## MLE
     if(identical(pi0, "estimate")){
@@ -119,26 +120,40 @@ ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate
 #   return(-sum(log(d)) - n * log(1-pi0))
 # }
 
+# pg_nlm_fn_fix_pi02 <- function(par, x, s, pi0){
+#   pi = pi0
+#   a  = exp(par[1])
+#   b  = exp(par[2])
+#   d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
+#   c = as.integer(x ==  0) - d
+#   ## return log(pi0 + (1-pi0) d) if x = 0;
+#   ## else return log(1-pi0) + log(d)
+#   return(-sum(log(pi*c + d)))
+# }
+
 pg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){
-  pi = pi0
+  ## d = NB(x, a, b/(b+s))
+  ## return - log(pi0 + (1-pi0) d) if x = 0; 
+  ## else return - (log(1-pi0) + log(d))
   a  = exp(par[1])
   b  = exp(par[2])
-  d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
-  c = as.integer(x ==  0) - d
-  return(-sum(log(pi*c + d)))
+  d_log <- dnbinom_cts_log_vec(x, a, b/(b+s))
+  out = sum((log(1-pi0) + d_log)[x!=0]) + sum(log1p(((1 - pi0)/pi0) * exp(d_log))[x == 0])
+  return(-out)
 }
 
 
 
 pg_nlm_fn <- function(par, x, s){
   #browser()
-  pi = 1/(1+ exp(-par[1]))
+  pi0 = 1/(1+ exp(-par[1]))
   a = exp(par[2])
   b  =  exp(par[3])
-  d <- exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
-  c = as.integer(x ==  0) - d
+  d_log <- dnbinom_cts_log_vec(x, a, b/(b+s))
+  #c = as.integer(x ==  0) - d
+  out = sum((log(1-pi0) + d_log)[x!=0]) + sum(log1p(((1 - pi0)/pi0) * exp(d_log))[x == 0])
   #if(is.nan(sum(log(pi * c + d)))){browser()}
-  return(-sum(log(pi*c + d)))
+  return(-out)
 }
 
 # it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer

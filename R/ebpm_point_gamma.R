@@ -138,21 +138,25 @@ pg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){
   a  = exp(par[1])
   b  = exp(par[2])
   d_log <- dnbinom_cts_log_vec(x, a, b/(b+s))
-  out = sum((log(1-pi0) + d_log)[x!=0]) + sum(log1p(((1 - pi0)/pi0) * exp(d_log))[x == 0])
+  out = sum((log(1-pi0) + d_log[x!=0])) + sum(log(pi0) + log1p(((1 - pi0)/pi0) * exp(d_log[x == 0])))
   return(-out)
 }
 
 
 
 pg_nlm_fn <- function(par, x, s){
+  ## d = NB(x, a, b/(b+s))
+  ## return - log(pi0 + (1-pi0) d) if x = 0; 
+  ## else return - (log(1-pi0) + log(d))
   #browser()
   pi0 = 1/(1+ exp(-par[1]))
   a = exp(par[2])
   b  =  exp(par[3])
   d_log <- dnbinom_cts_log_vec(x, a, b/(b+s))
+  #d = exp(dnbinom_cts_log_vec(x, a, b/(b+s)))
   #c = as.integer(x ==  0) - d
-  out = sum((log(1-pi0) + d_log)[x!=0]) + sum(log1p(((1 - pi0)/pi0) * exp(d_log))[x == 0])
-  #if(is.nan(sum(log(pi * c + d)))){browser()}
+  out = sum((log(1-pi0) + d_log[x!=0])) + sum(log(pi0) + log1p(((1 - pi0)/pi0) * exp(d_log[x == 0])))
+  #if(is.nan(sum(log(pi0 * c + d)))){browser()}
   return(-out)
 }
 

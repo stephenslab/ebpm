@@ -27,7 +27,7 @@
 #' @return A list containing elements:
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
-#'         means, and to add posterior log mean).}
+#'         means, and posterior log mean).}
 #'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}}, of class \code{gammamix}} 
 #'       \item{\code{log_likelihood}}{The optimal log likelihood attained
 #'         \eqn{L(\hat{g})}.}

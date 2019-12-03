@@ -23,7 +23,7 @@
 #' @return A list containing elements:
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
-#'         means, and to add posterior log mean).}
+#'         means, and posterior log mean).}
 #'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}} of class \code{point_gamma}} 
 #'       \item{\code{log_likelihood}}{The optimal log likelihood attained
 #'         \eqn{L(\hat{g})}.}
@@ -158,13 +158,6 @@ pg_nlm_fn <- function(par, x, s){
   out = sum((log(1-pi0) + d_log[x!=0])) + sum(log(pi0) + log1p(((1 - pi0)/pi0) * exp(d_log[x == 0])))
   #if(is.nan(sum(log(pi0 * c + d)))){browser()}
   return(-out)
-}
-
-# it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
-dnbinom_cts_log_vec <- function(x, a, prob){
-  tmp = x*log(1-prob)
-  tmp[x == 0] = 0 ## R says 0*-Inf = NaN
-  return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
 }
 
 ## par0: pi0,shape, scale

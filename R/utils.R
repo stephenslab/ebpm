@@ -60,11 +60,19 @@ dnbinom_cts_log <- function(x, a, prob){
   return(out)
 }
 
-dnbinom_cts_log_1d <- function(x, a, prob){
+# dnbinom_cts_log_1d <- function(x, a, prob){
+#   tmp = x*log(1-prob)
+#   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
+#   return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
+# }
+
+# it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
+dnbinom_cts_log_vec <- function(x, a, prob){
   tmp = x*log(1-prob)
   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
   return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
 }
+
 
 
 select_shape_gamma <- function(x, s, scale, m = 2, d = NULL, low = NULL){

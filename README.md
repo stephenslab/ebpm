@@ -21,3 +21,6 @@ plot(x, out$posterior$mean)
 ```
 vignettes: 
 https://zihao12.github.io/ebpmf_demo/vignette_ebpm.html
+
+a comparison with the method proposed in "Bayesian inference on quasi-sparse count data": https://zihao12.github.io/ebpmf_demo/compare_GH.html
+

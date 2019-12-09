@@ -1,5 +1,9 @@
 # ebpm
-R package to fit the Empirical Bayes Poisson Means model.
+R package to fit the Empirical Bayes Poisson Means model:
+\begin{equation}
+ x_i \sim Pois(\lambda_i)
+\end{equation}
+
 See model details and derivation in https://zihao12.github.io/ebpmf_demo/ebpm.pdf
 
 

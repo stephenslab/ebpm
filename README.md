@@ -1,8 +1,11 @@
 # ebpm
 R package to fit the Empirical Bayes Poisson Means model:
-\begin{equation}
- x_i \sim Pois(\lambda_i)
-\end{equation}
+
+x_i \sim Pois(s_i \lambda_i), i = 1 ... n 
+
+\lambda_i \sim g(.)
+
+where x_i, s_i are known, and we want to estimate \lambda_i s. This is analogous to the Normal Means problem.  
 
 See model details and derivation in https://zihao12.github.io/ebpmf_demo/ebpm.pdf
 

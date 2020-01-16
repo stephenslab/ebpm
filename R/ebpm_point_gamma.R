@@ -132,13 +132,18 @@ ebpm_point_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate
 # }
 
 pg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){
+  #browser()
   ## d = NB(x, a, b/(b+s))
   ## return - log(pi0 + (1-pi0) d) if x = 0; 
   ## else return - (log(1-pi0) + log(d))
   a  = exp(par[1])
   b  = exp(par[2])
   d_log <- dnbinom_cts_log_vec(x, a, b/(b+s))
-  out = sum((log(1-pi0) + d_log[x!=0])) + sum(log(pi0) + log1p(((1 - pi0)/pi0) * exp(d_log[x == 0])))
+  if(pi0 == 0){
+    out = sum(d_log)
+  }else{
+    out = sum((log(1-pi0) + d_log[x!=0])) + sum(log(pi0) + log1p(((1 - pi0)/pi0) * exp(d_log[x == 0])))
+  }
   return(-out)
 }
 

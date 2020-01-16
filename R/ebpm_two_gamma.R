@@ -43,18 +43,10 @@ ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate",
   if(!fix_g){
     ## MLE
     if(identical(pi0, "estimate")){
-      if(!all(x  > 0)){
-        fn_params = list(x = x, s = s)
-        opt = do.call(nlm, c(list(tg_nlm_fn, tg_transform_param(g_init)), fn_params, control))
-        log_likelihood =  -tg_nlm_fn(opt$estimate, x, s)
-        opt_g = tg_transform_param_back(opt$estimate)
-      }else{  ## in  this case, optimal pi0 is 0, but is not reachable after a transformation in nlm; so fix pi0 at 0
-        pi0 = 0
-        fn_params = list(x = x, s = s, pi0 = pi0)
-        opt = do.call(nlm, c(list(tg_nlm_fn_fix_pi0, tg_transform_param_fix_pi0(g_init)), fn_params, control))
-        log_likelihood =  -tg_nlm_fn_fix_pi0(opt$estimate, x, s, pi0)
-        opt_g = c(pi0, tg_transform_param_back_fix_pi0(opt$estimate))
-      }
+      fn_params = list(x = x, s = s)
+      opt = do.call(nlm, c(list(tg_nlm_fn, tg_transform_param(g_init)), fn_params, control))
+      log_likelihood =  -tg_nlm_fn(opt$estimate, x, s)
+      opt_g = tg_transform_param_back(opt$estimate)
     }else{ ## fix pi0
       pi0 = as.numeric(pi0)
       fn_params = list(x = x, s = s, pi0 = pi0)
@@ -164,19 +156,26 @@ tg_transform_param_back_fix_pi0 <- function(par){
 init_two_gamma <- function(x, s){
   #browser()
   ## use k-means to find 2 clusters
-  clst = kmeans(x = x/s, centers = 2)
-  ## initialzie pi0
-  pi0 = sum(clst$cluster == 1)/length(x)
-  ## estimate shape1, scale1
-  idx = which(clst$cluster == 1)
-  fit_ = ebpm_point_gamma(x = x[idx], s = s[idx], pi0 = 0)
-  shape1 = fit_$fitted_g$shape
-  scale1 = fit_$fitted_g$scale
-  ## estimate shape2, scale2
-  idx = which(clst$cluster == 2)
-  fit_ = ebpm_point_gamma(x = x[idx], s = s[idx], pi0 = 0)
-  shape2 = fit_$fitted_g$shape
-  scale2 = fit_$fitted_g$scale
+  clst = try(kmeans(x = x/s, centers = 2))
+  
+  if(class(clst) == "try-error"){ ## then probably there should be only 1 cluster
+    pi0 = 0
+    shape1 = 1; scale1 = 1;
+    shape2 = 1; scale2 = 1;
+  }else{
+    ## initialzie pi0
+    pi0 = sum(clst$cluster == 1)/length(x)
+    ## estimate shape1, scale1
+    idx = which(clst$cluster == 1)
+    fit_ = ebpm_point_gamma(x = x[idx], s = s[idx], pi0 = 0)
+    shape1 = fit_$fitted_g$shape
+    scale1 = fit_$fitted_g$scale
+    ## estimate shape2, scale2
+    idx = which(clst$cluster == 2)
+    fit_ = ebpm_point_gamma(x = x[idx], s = s[idx], pi0 = 0)
+    shape2 = fit_$fitted_g$shape
+    scale2 = fit_$fitted_g$scale
+  }
   return(list(pi0 = pi0, shape1 = shape1, scale1 = scale1, shape2 = shape2, scale2 = scale2))
 }
 

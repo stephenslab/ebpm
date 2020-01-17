@@ -57,10 +57,13 @@ test_that("RMSE: posterior  > MLE", {
 })
 
 
-test_that("test fix_g", {
-  expect_false(any(fit$posterior != fit_fixg$posterior) || fit$log_likelihood != fit_fixg$log_likelihood)
+test_that("test fix_g posterior is the same", {
+  expect_false(any(fit$posterior != fit_fixg$posterior))
 })
 
+test_that("test fix_g posterior is the same", {
+  expect_equal(fit$log_likelihood, fit_fixg$log_likelihood)
+})
 
 
 

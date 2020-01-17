@@ -4,15 +4,15 @@
 \alias{ebpm_two_gamma}
 \title{Empirical Bayes Poisson Mean (mixture of two gammas as prior)}
 \usage{
-ebpm_two_gamma(x, s = 1, g_init = NULL, fix_g = F,
-  pi0 = "estimate", control = NULL)
+ebpm_two_gamma(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100,
+  rel_tol = 1e-10, control = NULL)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}
 
 \item{s}{vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.}
 
-\item{g_init}{The prior distribution \eqn{g}, of the class \code{point_gamma}. Usually this is left
+\item{g_init}{The prior distribution \eqn{g}, of the class \code{two_gamma}. Usually this is left
 unspecified (\code{NULL}) and estimated from the data. However, it can be
 used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
 example, to do computations with the "true" \eqn{g} in simulations). If
@@ -22,9 +22,11 @@ specifies the initial value of \eqn{g} used during optimization.}
 \item{fix_g}{If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
 of estimating it.}
 
-\item{pi0}{Either  \code{"estimate"} which optimizes over pi0 along with  shape and scale, or a number in \code{[0,1]} that fixes pi0}
-
 \item{control}{A list of control parameters  to be passed to the optimization function. `nlm` is  used.}
+
+\item{n_iter:}{number of maximum EM steps}
+
+\item{rel_tol:}{tolerance for (maximum) relative change in parameters in \eqn{g}}
 }
 \value{
 A list containing elements:

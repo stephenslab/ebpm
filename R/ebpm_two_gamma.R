@@ -8,7 +8,7 @@
 #' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
 #' @param x vector of Poisson observations.
 #' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
-#' @param g_init The prior distribution \eqn{g}, of the class \code{point_gamma}. Usually this is left
+#' @param g_init The prior distribution \eqn{g}, of the class \code{two_gamma}. Usually this is left
 #'   unspecified (\code{NULL}) and estimated from the data. However, it can be
 #'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
 #'   example, to do computations with the "true" \eqn{g} in simulations). If
@@ -16,10 +16,10 @@
 #'   specifies the initial value of \eqn{g} used during optimization. 
 #' @param fix_g If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
 #'   of estimating it.
-#' @param pi0 Either  \code{"estimate"} which optimizes over pi0 along with  shape and scale, or a number in \code{[0,1]} that fixes pi0
+#' @param n_iter: number of maximum EM steps
+#' @param rel_tol: tolerance for (maximum) relative change in parameters in \eqn{g}
 #' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
 
-#' 
 #' @return A list containing elements:
 #'     \describe{
 #'       \item{\code{posterior}}{A data frame of summary results (posterior
@@ -35,32 +35,127 @@
 #'    out = ebpm_point_gamma(x,s)
 #' @export
 
-ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate",control = NULL){
-  if(length(s) == 1){s = replicate(length(x),s)}
-  if(is.null(control)){control = nlm_control_defaults()}
+ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100, rel_tol = 1e-10,control = NULL){
+  n = length(x)
+  if(length(s) == 1){s = replicate(n,s)}
+  if(is.null(control)){control = list(ndigit = 8, stepmax = 10, iterlim = 1, check.analyticals = FALSE)}
   if(is.null(g_init)){g_init = init_two_gamma(x, s); fix_g =  F}
-  #browser()
-  if(!fix_g){
-    ## MLE
-    if(identical(pi0, "estimate")){
-      fn_params = list(x = x, s = s)
-      opt = do.call(nlm, c(list(tg_nlm_fn, tg_transform_param(g_init)), fn_params, control))
-      log_likelihood =  -tg_nlm_fn(opt$estimate, x, s)
-      opt_g = tg_transform_param_back(opt$estimate)
-    }else{ ## fix pi0
-      pi0 = as.numeric(pi0)
-      fn_params = list(x = x, s = s, pi0 = pi0)
-      opt = do.call(nlm, c(list(tg_nlm_fn_fix_pi0, tg_transform_param_fix_pi0(g_init)), fn_params, control))
-      log_likelihood =  -tg_nlm_fn_fix_pi0(opt$estimate, x, s, pi0)
-      opt_g = c(pi0, tg_transform_param_back_fix_pi0(opt$estimate))
-    }
-  }else{ ## fix_g = T
-    opt_g = as.numeric(g_init)
-    # log_likelihood =  ifelse( g_init$pi0 == 0, -tg_nlm_fn_pi0(tg_transform_param_pi0(opt_g), x, s), -tg_nlm_fn(tg_transform_param(opt_g), x, s))
-    log_likelihood =  -tg_nlm_fn(tg_transform_param(opt_g), x, s)
-  }
-  fitted_g = list(pi0 = opt_g[1], shape1 = opt_g[2], scale1  = opt_g[3], shape2 = opt_g[4], scale2  = opt_g[5])
   
+  # fitted = ebpm_two_gamma_util(x, s, n_iter, g_init, fix_g)
+  progress = replicate(n_iter, -1e+20)
+  
+  pi0 = g_init$pi0
+  a1 = g_init$shape1
+  b1 = 1/g_init$scale1
+  a2 = g_init$shape2
+  b2 = 1/g_init$scale2
+  
+  if(fix_g){
+    log_likelihood = compute_ll_two_gamma(x, s, pi0, a1, b1, a2, b2)
+    param_curr = c(pi0, a1, b1, a2, b2)
+    fitted_g = two_gamma(pi0 = pi0, shape1 = a1, scale1 = 1/b1, 
+                         shape2 = a2, scale2 = 1/b2)
+  }else{
+    ## EM updates
+    for(i in 1:n_iter){
+      ## record previous parameters
+      param_prev = c(pi0, a1, b1, a2, b2)
+      ### E-step: compute Z | X, pi^0
+      w1 = compute_posterior_w(x, s, pi0, a1,b1, a2, b2)
+      w2 = 1 - w1
+      ### M-step:
+      ## update pi0
+      pi0 = sum(w1)/n
+      ## update a1, b1
+      tmp_ab = update_ab(w1, x, s, a1, b1, control)
+      a1 = tmp_ab$a
+      b1 = tmp_ab$b
+      ## update a2, b2
+      tmp_ab = update_ab(w2, x, s, a2, b2, control)
+      a2 = tmp_ab$a
+      b2 = tmp_ab$b
+      
+      ## record progress
+      log_likelihood = compute_ll_two_gamma(x, s, pi0, a1, b1, a2, b2)
+      progress[i] = log_likelihood
+      param_curr = c(pi0, a1, b1, a2, b2)
+      rel_diff = compute_rel_diff(param_prev, param_curr)
+      
+      if(rel_diff < rel_tol){
+        #print(sprintf("converges after iter %d", i))
+        progress = progress[1:i]
+        break
+      }
+    }
+  }
+  
+  
+  fitted_g = two_gamma(pi0 = pi0, shape1 = a1, scale1 = 1/b1, 
+                       shape2 = a2, scale2 = 1/b2)
+  ## compute posterior
+  posterior = compute_posterior_lam(x, s, fitted_g)
+  
+  return(list(fitted_g = fitted_g, posterior = posterior, log_likelihood = log_likelihood, progress = progress))
+}
+
+
+#######################################################################
+######################### Helper Functions ############################
+#######################################################################
+
+## compute NB(x, size = a, prob = p)
+compute_nb <- function(x, a, p)
+  exp(dnbinom_cts_log_vec(x, a, p))
+
+compute_weighted_nb_log <- function(w, x, a, p)
+  sum( w * dnbinom_cts_log_vec(x,a,p))
+
+compute_ll_two_gamma <- function(x, s, pi1, a1, b1, a2, b2){
+  nb1 = compute_nb(x, a = a1, p = b1/(b1 + s))
+  nb2 = compute_nb(x, a = a2, p = b2/(b2 + s))
+  return(sum(log(pi1*nb1 + (1 - pi1)*nb2)))
+}
+
+
+## compute posterior for w: P(Z | X, pi^0)
+compute_posterior_w <- function(x, s, pi1, a1,b1, a2, b2){
+  n = length(x)
+  ## compute posterior Z | X, pi1^0
+  w1 =  pi1 * compute_nb(x, a1, b1/(b1+s))   ## P(Z = 1 | X, pi1^0), not scaled yet
+  w2 =  (1 - pi1) * compute_nb(x, a2, b2/(b2+s))   ## P(Z = 1 | X, pi1^0), not scaled yet
+  w1 = w1/(w1 + w2)
+  return(w1)
+}
+
+
+## update a, b in weighted NB
+## max_{a,b} sum_i w_i log NB(x_i, a, b/b+s_i)
+update_ab <- function(w, x, s, a, b, control){
+  fn_params = list(x = x, s = s,  w = w)
+  init_t = c(log(a), log(b))
+  opt = do.call(nlm, c(list(obj_w_nb, init_t), fn_params, control))
+  log_likelihood =  -obj_w_nb(opt$estimate, x, s, w)
+  a = exp(opt$estimate[1])
+  b = exp(opt$estimate[2])
+  return(list(a = a, b = b))
+}
+
+## obj for nlm
+## par = c(log(a), log(b))
+obj_w_nb <- function(par, x, s, w){
+  n = length(x)
+  a = exp(par[1])
+  b = exp(par[2])
+  return(- compute_weighted_nb_log(w, x,a, b/(b + s)))
+}
+
+## compute relative differences between v_curr and v_prev
+compute_rel_diff <- function(v_prev, v_curr){
+  return(sum(abs(v_curr - v_prev))/sum(abs(v_curr + v_prev)))
+}
+
+
+compute_posterior_lam <- function(x,s,fitted_g){
   ## compute posterior
   pi0 = fitted_g$pi0 
   a1 = fitted_g$shape1
@@ -76,82 +171,7 @@ ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, pi0 = "estimate",
   lam_pm = pi1 * (a1 + x)/(b1 + s) +  pi2 * (a2 + x)/(b2 + s)
   lam_log_pm = pi1 *( digamma(a1 + x) - log(b1 + s) ) + pi2 *( digamma(a2 + x) - log(b2 + s) )
   posterior = data.frame(mean = lam_pm, mean_log = lam_log_pm)
-  return(list(fitted_g = fitted_g, posterior = posterior, log_likelihood = log_likelihood))
 }
-
-tg_nlm_fn_fix_pi0 <- function(par, x, s, pi0){
-  ## d = NB(x, a, b/(b+s))
-  ## return - log(pi0 + (1-pi0) d) if x = 0; 
-  ## else return - (log(1-pi0) + log(d))
-  a1 = exp(par[1])
-  b1  =  exp(par[2])
-  a2 = exp(par[3])
-  b2  =  exp(par[4])
-  d1_log <- dnbinom_cts_log_vec(x, a1, b1/(b1+s))
-  d2_log <- dnbinom_cts_log_vec(x, a2, b2/(b2+s))
-  out = sum( log( pi0*exp(d1_log)  + (1-pi0)*exp(d2_log) ) )
-  return(-out)
-}
-
-tg_nlm_fn <- function(par, x, s){
-  ## d1 = NB(x, a1, b1/(b1+s)); d2 = NB(x, a2, b2/(b2+s))
-  ## return - log(pi0 * d1 + (1-pi0) * d2) 
-  #browser()
-  pi0 = 1/(1+ exp(-par[1]))
-  a1 = exp(par[2])
-  b1  =  exp(par[3])
-  a2 = exp(par[4])
-  b2  =  exp(par[5])
-  d1_log <- dnbinom_cts_log_vec(x, a1, b1/(b1+s))
-  d2_log <- dnbinom_cts_log_vec(x, a2, b2/(b2+s))
-  out = sum( log( pi0*exp(d1_log)  + (1-pi0)*exp(d2_log) ) )
-  return(-out)
-}
-
-
-## par0: pi0,shape, scale
-## want: logit(pi0), log(shape1), log(1/scale1), log(shape2), log(1/scale2)
-tg_transform_param <- function(par0){
-  par0 = as.numeric(par0)
-  par = rep(0,length(par0))
-  par[1] = log(par0[1]/(1-par0[1]))
-  par[2] = log(par0[2])
-  par[3] = - log(par0[3])
-  par[4] = log(par0[4])
-  par[5] = - log(par0[5])
-  return(par)
-}
-
-tg_transform_param_back <- function(par){
-  par0 = rep(0,length(par))
-  par0[1] = 1/(1+ exp(-par[1]))
-  par0[2] = exp(par[2])
-  par0[3] = exp(- par[3])
-  par0[4] = exp(par[4])
-  par0[5] = exp(- par[5])
-  return(par0)
-}
-
-tg_transform_param_fix_pi0 <- function(par0){
-  ## only need to optimize over shape, scale
-  par0 = c(par0$shape1, par0$scale1, par0$shape2, par0$scale2)
-  par = rep(0,length(par0))
-  par[1] = log(par0[1])
-  par[2] = - log(par0[2])
-  par[3] = log(par0[3])
-  par[4] = - log(par0[4])
-  return(par)
-}
-
-tg_transform_param_back_fix_pi0 <- function(par){
-  par0 = rep(0,length(par))
-  par0[1] = exp(par[1])
-  par0[2] = exp(- par[2])
-  par0[3] = exp(par[3])
-  par0[4] = exp(- par[4])
-  return(par0)
-}
-
 
 init_two_gamma <- function(x, s){
   #browser()

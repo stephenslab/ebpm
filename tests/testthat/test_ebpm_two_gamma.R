@@ -1,49 +1,35 @@
 ## test
+rm(list = ls())
+devtools::load_all(".")
 context("test_ebpm_two_gamma")
 library(ebpm)
 set.seed(123)
-sim_two_gamma <- function(pi, a1, b1, a2, b2){
-  if(rbinom(1,1, pi)){return(rgamma(1,shape = a1, rate = b1))}
-  else{return(rgamma(1,shape = a2, rate = b2))}
-}
 
-simulate_pm <- function(s, param){
-  param_trans = tg_transform_param(param)
-  param = as.numeric(param)
-  pi = param[1]
-  a1 = param[2]
-  b1  = 1/param[3]
-  a2 = param[4]
-  b2  = 1/param[5]
-  lam = replicate(length(s), sim_two_gamma(pi, a1, b1, a2, b2))
-  x = rpois(length(s), s*lam)
-  ll = -tg_nlm_fn(param_trans, x, s)
-  return(list(x = x, s= s, lam_true = lam, param = param, log_likelihood = ll))
+simulate_two_gamma_poisson <- function(g_true, s, n_sample = 1000){
+  lam1 = rgamma(n = n_sample, shape = g_true$shape1, scale = g_true$scale1)
+  lam2 = rgamma(n = n_sample, shape = g_true$shape2, scale = g_true$scale2)
+  z = rbinom(n = n_sample, size = 1, prob = g_true$pi0)
+  lam = z * lam1 + (1-z) * lam2
+  x = rpois(n = n_sample, lambda = s * lam)
+  ll = compute_ll_two_gamma(x, s, pi1 = g_true$pi0, a1 = g_true$shape1, b1 = 1/g_true$scale1, 
+                            a2 = g_true$shape2, b2 = 1/g_true$scale2)
+  #return(list(x = x, lam = lam))
+  return(list(x = x, s= s, lam_true = lam, g_true = g_true, log_likelihood = ll))
 }
 
 rmse <- function(x,y){
   return(sqrt(mean((x-y)^2)))
 }
 
-n = 4000
-s = replicate(n, 1)
-pi  = 0.8
+g_true = two_gamma(pi0 = 0.6, shape1 = 500, scale1 = 1/10, shape2 = 20, scale2 = 1/2)
+sim = simulate_two_gamma_poisson(g_true, s = 1, n_sample = 1000)
+  
+fit_start_truth = ebpm::ebpm_two_gamma(sim$x, sim$s, g_init = g_true, rel_tol = 1e-5)
 
-a1 = 0.01
-b1  = 10
-
-a2 = 100
-b2 = 10
-param =  list(pi0 = pi, shape1 = a1, scale1 = 1/b1, shape2 = a2, scale2 = 1/b2)
-
-sim = simulate_pm(s, param)
-
-fit <- ebpm::ebpm_two_gamma(sim$x, sim$s)
-
-fit_fixpi <- ebpm::ebpm_two_gamma(sim$x, sim$s, pi0 = pi)
+fit <- ebpm::ebpm_two_gamma(sim$x, sim$s, rel_tol = 1e-5)
 
 
-fit_fixg <- ebpm::ebpm_two_gamma(sim$x, sim$s, g_init = fit$fitted_g, fix_g = T)
+fit_fixg <- ebpm::ebpm_two_gamma(sim$x, sim$s, g_init = fit$fitted_g, fix_g = T, rel_tol = 1e-5)
 
 
 test_that("fitted loglikelihood > simulated  loglikelihood", {
@@ -68,7 +54,7 @@ test_that("test fix_g", {
 })
 
 
-
+print(fit$fitted_g)
 
 ## to do:
 ## add  comparison  with `ashr_pois` when it is updated.  

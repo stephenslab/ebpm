@@ -38,7 +38,7 @@
 ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100, rel_tol = 1e-10,control = NULL){
   n = length(x)
   if(length(s) == 1){s = replicate(n,s)}
-  if(is.null(control)){control = list(ndigit = 8, stepmax = 10, iterlim = 1, check.analyticals = FALSE)}
+  if(is.null(control)){control = nlm_control_defaults()}
   if(is.null(g_init)){g_init = init_two_gamma(x, s); fix_g =  F}
   
   # fitted = ebpm_two_gamma_util(x, s, n_iter, g_init, fix_g)

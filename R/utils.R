@@ -68,11 +68,36 @@ dnbinom_cts_log <- function(x, a, prob){
 
 # it is equivalent to dnbinom in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
 dnbinom_cts_log_vec <- function(x, a, prob){
+  #browser()
+  if(length(x) > 1 && length(a) == 1){a = replicate(length(x), a)}
   tmp = x*log(1-prob)
   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
-  return(a*log(prob) + tmp + lgamma(x+a) - lgamma(x+1) - lgamma(a))
+  ## compute lgamma(a + x) - lgamma(a)
+  if(a > 1e+4 && x < 1e+4 && a/x > 1e+4){ ## this condition needs refinement!!
+    lgamma_diff = lgamma_diff_taylor(a, x)
+  }
+  else{lgamma_diff = lgamma(a + x)  - lgamma(a)}
+  
+  return(a*log(prob) + tmp + lgamma_diff - lgamma(x+1))
 }
 
+## compute lgamma(x + dx) - lgamma(dx), y > x
+## when dx << x, and x is very large and dx is small
+## use taylor expansion: 
+## lgamma(y) - lgamma(x) \approx  
+##                        digamma(x) * (y - x) + 
+##                        1/2 * psigamma(x, deriv = 1) * (y - x)^2, 
+##                        1/6 * psigamma(x, deriv = 2) * (y - x)^3+ 
+##                        1/24 * psigamma(c, deriv = 3) * (y - x)^4 where c \in (x, y), and I choose c = x
+lgamma_diff_taylor <- function(x, dx){
+  c = x
+  out = digamma(x) * dx + 
+    1/2 * psigamma(c, deriv = 1) * dx^2 
+    # 1/6 * psigamma(x, deriv = 2) * dx^3 +
+    # 1/24 * psigamma(x, deriv = 3) * dx^4 +
+    # 1/120 * psigamma(c, deriv = 4) * dx^5
+  return(out)
+}
 
 
 select_shape_gamma <- function(x, s, scale, m = 2, d = NULL, low = NULL){

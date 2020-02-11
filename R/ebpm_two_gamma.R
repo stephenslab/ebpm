@@ -32,7 +32,7 @@
 #'    beta = c(rep(0,50),rexp(50))
 #'    x = rpois(100,beta) # simulate Poisson observations
 #'    s = replicate(100,1)
-#'    out = ebpm_point_gamma(x,s)
+#'    out = ebpm_two_gamma(x,s)
 #' @export
 
 ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100, rel_tol = 1e-10,control = NULL){
@@ -103,7 +103,7 @@ ebpm_two_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100, rel
 ######################### Helper Functions ############################
 #######################################################################
 
-## compute NB(x, size = a, prob = p)
+## compute NB(x, size = a, prob = p)  
 compute_nb <- function(x, a, p)
   exp(dnbinom_cts_log_vec(x, a, p))
 

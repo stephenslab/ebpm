@@ -7,6 +7,6 @@
 #' @param gam
 #'
 #' @export 
-point_gamma <- function(alpha, a, b, phi, gam) {
+gh_gamma <- function(alpha, a, b, phi, gam) {
   structure(data.frame(alpha = alpha, a = a, b = b, phi = phi, gam = gam), class="gh_gamma")
 }

@@ -4,8 +4,14 @@
 \alias{ebpm_point_gamma}
 \title{Empirical Bayes Poisson Mean with Point Gamma  as Prior}
 \usage{
-ebpm_point_gamma(x, s = 1, g_init = NULL, fix_g = F,
-  pi0 = "estimate", control = NULL)
+ebpm_point_gamma(
+  x,
+  s = 1,
+  g_init = NULL,
+  fix_g = F,
+  pi0 = "estimate",
+  control = NULL
+)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}

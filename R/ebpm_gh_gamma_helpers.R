@@ -48,11 +48,13 @@ mle.gh.gamma <- function(y, var.fix, var.est, control){
 obj.gh.gamma <- function(y, var.est,var.fix, var.n){
   vars = as.list(c(var.est, var.fix))
   names(vars) = var.n
-  if(vars$a < 0 || vars$a == 0){return(+Inf)}
-  if(vars$b < 0 || vars$b == 0){return(+Inf)}
-  if(vars$alpha < 0 || vars$alpha == 0){return(+Inf)}
-  if(vars$gam < 0){return(+Inf)} ## TODO: check if gam == 0 will cause problems
-  if(vars$phi < 0 || vars$phi ==0 || vars$phi > 2 || vars$phi == 2){return(+Inf)}
+  # inf.my = .Machine$double.xmax
+  inf.my = 1e+30
+  if(vars$a < 0 || vars$a == 0){return(inf.my)}
+  if(vars$b < 0 || vars$b == 0){return(inf.my)}
+  if(vars$alpha < 0 || vars$alpha == 0){return(inf.my)}
+  if(vars$gam < 0){return(inf.my)} ## TODO: check if gam == 0 will cause problems
+  if(vars$phi < 0 || vars$phi ==0 || vars$phi > 2 || vars$phi == 2){return(inf.my)}
   obj = - loglik.gh.gamma(y = y, gam = vars[["gam"]], phi = vars[["phi"]],
                           alpha = vars[["alpha"]], a = vars[["a"]], b = vars[["b"]])
   return(obj)
@@ -61,12 +63,12 @@ obj.gh.gamma <- function(y, var.est,var.fix, var.n){
 ############################ compute posterior ######################
 #####################################################################
 compute_posterior.gh.theta <- function(x, g){
-  posterior.theta.mean = (x + g$alpha) * compute_posterior.1minus_psi(x, g, log = FALSE)
-  posterior.theta.mean_log = digamma(x + g$alpha) + compute_posterior.1minus_psi(x, g, log = TRUE)
+  posterior.theta.mean = (x + g$alpha) * compute_posterior.gh.1minus_psi(x, g, log = FALSE)
+  posterior.theta.mean_log = digamma(x + g$alpha) + compute_posterior.gh.1minus_psi(x, g, log = TRUE)
   return(list(mean = posterior.theta.mean, mean_log = posterior.theta.mean_log))
 }
 
-compute_posterior.1minus_psi <- function(x, g, log){
+compute_posterior.gh.1minus_psi <- function(x, g, log){
   a = g$a + g$alpha
   b = g$b + x
   gam = g$gam

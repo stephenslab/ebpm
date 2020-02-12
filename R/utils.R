@@ -11,10 +11,10 @@ mixsqp_control_defaults <- function() {
 geom_seq <- function(low, up, m){
   N =  ceiling((log(up) - log(low))/log(m)) + 1
   #if(is.infinite(N)){browser()}
-  while(N > 500){
-    m = m*(2^0.75)
-    N =  ceiling((log(up) - log(low))/log(m)) + 1
-  }
+  # while(N > 500){
+  #   m = m*(2^0.75)
+  #   N =  ceiling((log(up) - log(low))/log(m)) + 1
+  # }
   out  = low*m^(seq(1,N, by = 1)-1)
   return(out)
 }

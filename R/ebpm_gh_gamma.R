@@ -3,6 +3,7 @@
 #' with g() being gh-gamma
 #' @import gsl
 #' @import numDeriv
+#' @export
 
 ebpm_gh_gamma <- function(x, s = 1, g_init = NULL, fix_g = c(F,F,F,F,F),control = NULL){
   if(is.null(control)){control = nlm_control_defaults()}

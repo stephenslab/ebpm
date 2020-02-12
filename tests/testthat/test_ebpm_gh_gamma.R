@@ -23,19 +23,21 @@ theta = c(replicate(n_z, 0.05), replicate(n_nz, 10.5))
 g_init = list(a = 0.1, b = 0.001, alpha = NULL, phi = NULL, gam = NULL)
 fix_g = TRUE
 
+fit0 = ebpm_invBeta_gamma(x = y)
+
 fit = ebpm_gh_gamma(x = y, g_init = g_init, fix_g = fix_g)
 
 fit2 = ebpm_two_gamma(x = y)
 fit3 = ebpm_point_gamma(x = y)
 
-#plot(y, fit$posterior$mean)
-ix = 1:n_z
-
-plot(y[1:n_z], fit2$posterior$mean[1:n_z])
-abline(a = 0, b = 1, col = "blue")
-
-plot(y[1:n_z], fit$posterior$mean[1:n_z])
-abline(a = 0, b = 1, col = "red")
+# #plot(y, fit$posterior$mean)
+# ix = 1:n_z
+# 
+# plot(y[1:n_z], fit2$posterior$mean[1:n_z])
+# abline(a = 0, b = 1, col = "blue")
+# 
+# plot(y[1:n_z], fit$posterior$mean[1:n_z])
+# abline(a = 0, b = 1, col = "red")
 
 
 

@@ -49,7 +49,8 @@ fit_pg$log_likelihood
 
 
 ```{r}
-fit_truth = ebpm_gh_gamma(x = sim$x, g_init = g_init, fix_g = c(TRUE, TRUE, TRUE, TRUE, TRUE))
+# fit_truth = ebpm_gh_gamma(x = sim$x, g_init = g_init, fix_g = c(TRUE, TRUE, TRUE, TRUE, TRUE))
+fit_truth = ebpm_gh_gamma(x = sim$x, g_init = g_init, fix_g = c(FALSE, FALSE, FALSE, TRUE, TRUE))
 print(fit_truth$log_likelihood)
 
 fix_g = replicate(5, TRUE)

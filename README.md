@@ -9,6 +9,7 @@ where x_i, s_i are known, and we want to estimate \lambda_i s. This is analogous
 
 See model details and derivation in https://zihao12.github.io/ebpmf_demo/ebpm.pdf
 
+Currently implemented methods are: `ebpm_point_gamma`, `ebpm_two_gamma`, `ebpm_point_gamma`, `ebpm_gamma_mixture_single_scale`, `ebpm_exponential_mixture` 
 
 ## Quick Start
 

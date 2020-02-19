@@ -1,6 +1,8 @@
 ## mle for twogamma-poisson model
 ## x_i \sim Pois(s \lambda_i)
 ## \lambda_i \sim \pi_0 Ga(shape1, scale1) + (1 - \pi_0) Ga(shape2, scale2) 
+#' @import Rfast
+#' @export
 mle_two_gamma <- function(x, s, 
 													g, maxiter = 1, tol_in = 1e-09, 
 													verbose = FALSE, get_progress = TRUE){
@@ -10,9 +12,8 @@ mle_two_gamma <- function(x, s,
   b1 = 1/g$scale1
   a2 = g$shape2
   b2 = 1/g$scale2
-  p1 = b1/(s + b1)
-  p2 = b2/(s + b2)
-  #browser()
+  p1 = ifelse(b1 == Inf, 1,b1/(s + b1))
+  p2 = ifelse(b2 == Inf, 1,b2/(s + b2))
   fit = mle_two_negbin(x, pi1, pi2, a1, p1, a2, p2, maxiter, tol_in, verbose, get_progress)
   g_ = fit$param
   progress = fit$logliks
@@ -47,6 +48,8 @@ mle_two_negbin <- function(x, pi1, pi2, a1, p1, a2, p2,
 		fit_res = w.negbin.mle(x, w1_scaled, expr1 = a1, tol = tol_in)
 		a1 = fit_res$param$a
 		p1 = fit_res$param$p
+
+
 		### update a2, p2
 		fit_res = w.negbin.mle(x, w2_scaled, expr1 = a2, tol = tol_in)
 		a2 = fit_res$param$a
@@ -106,10 +109,7 @@ w.negbin.mle <- function(x, w, expr1 = NULL, tol = 1e-05) {
   param <- c( p, expr2, m )
   names(param) <- c("p", "a", "mean")
   param = as.list(param)
-  # loglik <- Rfast::Lgamma(x + expr2) - Rfast::Lgamma(x + 1) - lgamma(expr2) + expr2 * log(p) + x * log(1-p)
-  # loglik <- sum( w * loglik)
   loglik <- sum(loglik.wnb(x,w,expr2,p))
-  
   runtime = proc.time() - start
   return(list(iters = i, loglik = loglik, param = param, runtime = runtime[[3]]))
 }
@@ -146,6 +146,7 @@ hessian.wnb.loga <- function(x, r, w, g = NULL, m = NULL){
 ## dr = g/h
 newton_step.wnb.loga <- function(x,r,w,m = NULL){
 	## suffers from h == 0 (g is also very small)
+	## TODO: investigate if we really need this `eps`
 	eps = 1e-40
 	expr = exp(r)
 	if(is.null(m)){m = sum(w*x)}
@@ -220,7 +221,6 @@ loglik.nb <- function(x, a, p){
 ## compute weighted loglikelihood for negative binomial
 ## input / output format is the same as loglik.nb
 # out = w * (diff.psigamma(a, x, -1) - Rfast::Lgamma(x + 1) + a * log(p) +  x * log( 1- p))
-
 loglik.wnb <- function(x,w,a,p){
 	## special case
 	## consider w_i * x_i * log( 1- p_i)

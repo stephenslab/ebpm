@@ -1,7 +1,8 @@
 rm(list = ls())
 library(ebpm)
 source("../two_gamma.R")
-source("../mle_two_gamma.R")
+source("../mle_two_gamma4.R")
+source("../utils.R")
 set.seed(123)
 ## test mle two gamma
 simulate_tg_poisson <- function(s, pi0, shape1, scale1, shape2, scale2, 
@@ -32,40 +33,51 @@ sim = simulate_tg_poisson(s, pi0, shape1, scale1, shape2, scale2, n)
 x = sim$x
 lam = sim$lam
 
+control = list(nlm_setting = list(ndigit = 8, stepmax = 30, check.analyticals = FALSE),
+						gradient = TRUE, hessian = TRUE)
 
+print(control$gradient)
+print(control$hessian)
+start = proc.time() 
+fit_tg_fast = mle_two_gamma(x, s, g_init, maxiter = maxiter, control = control,
+	tol_in = 1e-09, verbose = FALSE, get_progress = TRUE)
+runtime_tg_fast = proc.time() - start
 
 
 # start = proc.time() 
 # fit_tg = ebpm_two_gamma(x, s, g_init = g_init, n_iter = maxiter)
 # runtime_tg = proc.time() - start
 
-start = proc.time() 
-fit_tg_fast = mle_two_gamma(x, s, g_init, maxiter = maxiter, 
-	tol_in = 1e-09, verbose = TRUE, get_progress = TRUE)
-runtime_tg_fast = proc.time() - start
 
-print("compare runtime")
+
+# print("compare runtime")
 # print("tg")
 # print(runtime_tg)
-print("tg_fast")
+# print("tg_fast")
 print(runtime_tg_fast)
 
-print("compare loglikelihood")
+# print("compare loglikelihood")
 # print("tg")
 # print(fit_tg$log_likelihood)
-print("tg_fast")
+# print("tg_fast")
 print(fit_tg_fast$progress[length(fit_tg_fast$progress)])
 
 
-# [1] "compare runtime"
-# [1] "tg"
+# > source("test_mle_two_gamma4.R")
+# [1] FALSE
+# [1] FALSE
 #    user  system elapsed 
-#  17.713   0.000  17.712 
-# [1] "tg_fast"
+#   7.995   0.000   7.995 
+# [1] -1498.654
+# > source("test_mle_two_gamma4.R")
+# [1] TRUE
+# [1] FALSE
 #    user  system elapsed 
-#   1.401   0.004   1.404 
-# [1] "compare loglikelihood"
-# [1] "tg"
-# [1] -1498.943
-# [1] "tg_fast"
-# [1] -1498.943
+#   6.049   0.000   6.050 
+# [1] -1498.654
+# > source("test_mle_two_gamma4.R")
+# [1] TRUE
+# [1] TRUE
+#    user  system elapsed 
+#   9.564   0.000   9.564 
+# [1] -1498.654

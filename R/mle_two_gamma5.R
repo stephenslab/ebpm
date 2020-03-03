@@ -14,8 +14,10 @@ mle_two_gamma <- function(x, s,
   b1 = 1/g$scale1
   a2 = g$shape2
   b2 = 1/g$scale2
-  fit = mle_two_gamma_wh(x, s, pi1, pi2, a1, b1, a2, b2,control, 
-				maxiter, tol_in, verbose, get_progress)
+  fit = mle_two_gamma_wh(x = x, s = s, pi1 = pi1, pi2 = pi2, 
+													a1 = a1, b1 = b1, a2 = a2, b2 = b2,control = control, 
+													maxiter = maxiter, tol_in = tol_in, 
+													verbose = verbose, get_progress = get_progress)
   g_ = fit$param
   progress = fit$logliks
   fitted_g = two_gamma(pi0 = g_$pi1, 
@@ -39,7 +41,7 @@ mle_two_gamma_wh <- function(x, s, pi1, pi2, a1, b1, a2, b2,
 	## EM updates
 	for(i in 1:maxiter){
 		## E-step
-		w1 = pi.posterior(x, s, pi1, pi2, a1, b1, a2, b2)
+		w1 = pi.posterior(x = x, s = s, pi1 = pi1, pi2 = pi2, a1 = a1, b1 = b1, a2 = a2, b2 = b2)
 		w2 = 1 - w1
 		w1_scaled = w1/sum(w1)
 		w2_scaled = w2/sum(w2)
@@ -54,17 +56,19 @@ mle_two_gamma_wh <- function(x, s, pi1, pi2, a1, b1, a2, b2,
 
 
 		### update a2, p2
-		fit_res = w.negbin.mle(x = x, s = s, w = w2_scaled, expr1 = a2, tol = tol_in,control = control)
+		fit_res = w.negbin.mle(x = x, s = s, w = w2_scaled, expr1 = a2, tol = tol_in, control = control)
 		a2 = fit_res$param$a
 		b2 = fit_res$param$b
 		## check progress
 		if(get_progress){logliks <- 
-			c(logliks, sum(log(pi1 * exp(loglik.nb(x, s, a1, b1)) + pi2 * exp(loglik.nb(x, s, a2, b2)))))}
+			c(logliks, sum(log(pi1 * exp(loglik.nb(x = x, s = s, a = a1, b = b1)) + 
+			pi2 * exp(loglik.nb(x = x, s = s, a = a2, b = b2)))))}
 		if(verbose & get_progress){print(sprintf("%d 		%f\n", i, logliks[i]))}
 	}
 
 	loglik <- ifelse(get_progress, logliks[i], 
-		sum(log(pi1 * exp(loglik.nb(x, s, a1, b1)) + pi2 * exp(loglik.nb(x, s, a2, b2)))))
+		sum(log(pi1 * exp(loglik.nb(x = x, s = s, a = a1, b = b1)) + 
+		pi2 * exp(loglik.nb(x = x, s = s, a = a2, b = b2)))))
 	param = list(pi1 = pi1, a1 = a1, b1 = b1, pi2 = pi2, a2 = a2, b2 = b2)
 	return(list(param = param, logliks = logliks, loglik = loglik))
 }
@@ -144,7 +148,7 @@ hessian.wnb.loga <- function(r, x, w, g = NULL, m = NULL){
 ## compute E[z_i= 1|x_i,a,p]
 pi.posterior <- function(x, s, pi1, pi2, a1, b1, a2, b2){
 	n = length(x)
-	w1 = 1 / (1 + (pi2/pi1)  * exp( loglik.nb(x, s, a2, b2) - loglik.nb(x, s, a2, b2)) )
+	w1 = 1 / (1 + (pi2/pi1)  * exp( loglik.nb(x, s, a2, b2) - loglik.nb(x, s, a1, b1)) )
 	return(w1)
 }
 

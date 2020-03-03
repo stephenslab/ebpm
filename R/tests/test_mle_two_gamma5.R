@@ -9,8 +9,8 @@ simulate_tg_poisson <- function(s, pi0, shape1, scale1, shape2, scale2,
 								n = 1000, seed = 123){
 	set.seed(seed)
 	idx = rbinom(n = n, size = 1, prob = pi0)
-	lam = idx * rgamma(n = n, shape = shape1, scale = scale1)
-	+ (1 - idx) * rgamma(n = n, shape = shape2, scale = scale2)
+	lam = idx * rgamma(n = n, shape = shape1, scale = scale1) +
+	 (1 - idx) * rgamma(n = n, shape = shape2, scale = scale2)
 	x = rpois(n = n, lambda = s*lam)
 	return(list(x = x, lam = lam))
 }
@@ -26,7 +26,7 @@ scale2 = 2
 maxiter = 100
 
 
-g_init = list(pi0 = pi0, shape1 = shape1, scale1 = scale1, 
+g_init = list(pi0 = 0.5, shape1 = shape1, scale1 = scale1, 
 	shape2 = shape2, scale2 = scale2)
 
 sim = simulate_tg_poisson(s, pi0, shape1, scale1, shape2, scale2, n)
@@ -34,7 +34,7 @@ x = sim$x
 lam = sim$lam
 
 control = list(nlm_setting = list(ndigit = 8, stepmax = 30, check.analyticals = FALSE),
-						gradient = FALSE, hessian = FALSE)
+						gradient = TRUE, hessian = FALSE)
 
 print(control$gradient)
 print(control$hessian)

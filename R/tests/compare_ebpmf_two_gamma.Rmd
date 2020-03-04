@@ -1,0 +1,172 @@
+---
+title: "compare_ebpmf_two_gamma"
+author: "Zihao Wang"
+date: "3/3/2020"
+output: html_document
+---
+
+## Goal
+* Now I have several possible implementations of `ebpm_two_gamma`. I want to find the fastest solution that can find the sparse solution. \
+
+* Note that many function file has functions with the same names ... so I would call those functions through sourcing (so the desired function should overwrite).
+
+
+```{r}
+rm(list = ls())
+source("~/Desktop/git/ebpm/R/utils.R")
+source("~/Desktop/git/ebpm/R/ebpm_point_gamma.R")
+source("~/Desktop/git/ebpm/R/point_gamma.R")
+source("~/Desktop/git/ebpm/R/two_gamma.R")
+library(ebpmf.alpha)
+set.seed(123)
+```
+
+
+## Simulate data
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+n = 99
+p = 300
+k= 4
+mfac = 2.5 # controls PVE of dense factor
+L = matrix(0, nrow=n, ncol=k)
+F = matrix(0, nrow=p, ncol=k)
+L[1:(n/3),1] = 1
+L[((n/3)+1):(2*n/3),2] = 1
+L[((2*n/3)+1):n,3] = 1
+L[,4] = 1+mfac*runif(n)
+F[1:(p/3),1] = 1+10*runif(p/3)
+F[((p/3)+1):(2*p/3),2] = 1+10*runif(p/3)
+F[((2*p/3)+1):p,3] = 1+10*runif(p/3)
+F[,4]= 1+mfac*runif(p)
+lambda = L %*% t(F)
+X = matrix(rpois(n=length(lambda),lambda),nrow=n)
+```
+
+
+## initialization
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+### initialiazation
+init_lf = NNLM::nnmf(A = X, k = k, loss = "mkl", method = "scd", max.iter = 20, verbose = FALSE)
+init = list(qg = initialize_qg_from_LF(L0 = init_lf$W, F0 = t(init_lf$H)))
+```
+
+## set-up for `ebpmf`
+```{r}
+tol = -1
+maxiter = 1000
+pm_control = list(n_iter = 10)
+verbose = FALSE
+```
+
+
+## ebpm_two_gamma_exact
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+#source("~/Desktop/git/ebpm/R/ebpm_two_gamma.R")
+runtime <- system.time(
+  fit_ebpmf_tg0_exact <- ebpmf.alpha::ebpmf(X, K = k,pm_func = ebpm::ebpm_two_gamma, 
+                                      init = init, pm_control = list(n_iter = 100, rel_tol = 1e-10), 
+                                      maxiter = maxiter, verbose = verbose, tol = tol)
+)
+fit_ebpmf_tg0_exact$runtime = runtime[[3]]
+```
+
+
+## ebpm_two_gamma
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+source("~/Desktop/git/ebpm/R/ebpm_two_gamma.R")
+runtime <- system.time(
+  fit_ebpmf_tg0 <- ebpmf.alpha::ebpmf(X, K = k,pm_func = ebpm::ebpm_two_gamma, 
+                                      init = init, pm_control = pm_control, 
+                                      maxiter = maxiter, verbose = verbose, tol = tol)
+)
+fit_ebpmf_tg0$runtime = runtime[[3]]
+```
+
+## ebpm_two_gamma_fast4
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+source("~/Desktop/git/ebpm/R/ebpm_two_gamma_fast4.R")
+source("~/Desktop/git/ebpm/R/mle_two_gamma4.R")
+runtime <- system.time(
+  fit_ebpmf_tg4 <- ebpmf.alpha::ebpmf(X, K = k,pm_func = ebpm_two_gamma_fast4, 
+                                      init = init, pm_control = pm_control, 
+                                      maxiter = maxiter, verbose = verbose, tol = tol)
+)
+
+fit_ebpmf_tg4$runtime = runtime[[3]]
+```
+
+
+## ebpm_two_gamma_fast5
+```{r cache=TRUE, autodep=TRUE, message=FALSE, warning=FALSE}
+source("~/Desktop/git/ebpm/R/ebpm_two_gamma_fast5.R")
+source("~/Desktop/git/ebpm/R/mle_two_gamma5.R")
+runtime <- system.time(
+  fit_ebpmf_tg5 <- ebpmf.alpha::ebpmf(X, K = k,pm_func = ebpm_two_gamma_fast5, 
+                                      init = init, pm_control = pm_control, 
+                                      maxiter = maxiter, verbose = verbose, tol = tol)
+)
+fit_ebpmf_tg5$runtime = runtime[[3]]
+```
+
+
+## compare runtime
+```{r}
+t(list(tg_exact = fit_ebpmf_tg0_exact$runtime, tg = fit_ebpmf_tg0$runtime,
+     tg4 = fit_ebpmf_tg4$runtime, tg5 = fit_ebpmf_tg5$runtime))
+```
+
+
+
+## look at ELBO
+
+```{r}
+plot(1:maxiter, fit_ebpmf_tg0_exact$ELBO, col = "black", xlab = "iter", ylab = "elbo")
+lines(fit_ebpmf_tg0$ELBO, col = "red")
+lines(fit_ebpmf_tg4$ELBO, col = "blue")
+lines(fit_ebpmf_tg5$ELBO, col = "green")
+```
+
+## look at data
+```{r}
+image(X)
+```
+
+
+
+## look at `L`
+
+```{r}
+## truth
+par(mfrow = c(2,2))
+for(i in 1:k){
+  plot(L[,i], main = "true loading")
+}
+
+## fit_ebpmf_tg0_exact
+par(mfrow = c(2,2))
+for(i in 1:k){
+  plot(fit_ebpmf_tg0_exact$qg$qls_mean[,i], main = "fit_ebpmf_tg0_exact")
+}
+
+
+## fit_ebpmf_tg0
+par(mfrow = c(2,2))
+for(i in 1:k){
+  plot(fit_ebpmf_tg0$qg$qls_mean[,i], main = "fit_ebpmf_tg0")
+}
+
+
+## fit_ebpmf_tg4
+par(mfrow = c(2,2))
+for(i in 1:k){
+  plot(fit_ebpmf_tg4$qg$qls_mean[,i], main = "fit_ebpmf_tg4")
+}
+
+## fit_ebpmf_tg5
+par(mfrow = c(2,2))
+for(i in 1:k){
+  plot(fit_ebpmf_tg5$qg$qls_mean[,i], main = "fit_ebpmf_tg5")
+}
+```
+
+

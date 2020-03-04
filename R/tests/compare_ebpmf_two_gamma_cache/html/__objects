@@ -1,0 +1,6 @@
+unnamed-chunk-2	F	k	L	lambda	mfac	n	p	X
+unnamed-chunk-3	init	init_lf
+unnamed-chunk-5	fit_ebpmf_tg0_exact	runtime
+unnamed-chunk-6	fit_ebpmf_tg0	runtime	compute_ll_two_gamma	compute_nb	compute_posterior_lam	compute_posterior_w	compute_rel_diff	compute_weighted_nb_log	ebpm_two_gamma	init_two_gamma	obj_w_nb	update_ab
+unnamed-chunk-7	fit_ebpmf_tg4	runtime	diff.psigamma	ebpm_two_gamma_fast4	gradient.wnb.loga	hessian.wnb.loga	lam.posterior	loglik.nb	loglik.tg	loglik.wnb	mle_two_gamma	mle_two_negbin	obj.wnb.loga	pi.posterior	psigamma.my	tg_control_defaults	w.negbin.mle
+unnamed-chunk-8	fit_ebpmf_tg5	runtime	ebpm_two_gamma_fast5	mle_two_gamma_wh

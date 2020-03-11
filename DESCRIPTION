@@ -14,8 +14,8 @@ LazyData: true
 RoxygenNote: 7.0.2
 Imports:
     mixsqp,
-    ggplot2,
     gtools,
-    stats
+    stats,
+    gsl
 Suggests: 
     testthat

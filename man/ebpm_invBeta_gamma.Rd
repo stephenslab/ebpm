@@ -4,8 +4,7 @@
 \alias{ebpm_invBeta_gamma}
 \title{Empirical Bayes Poisson Mean (invBeta-gamma as prior)}
 \usage{
-ebpm_invBeta_gamma(x, s = 1, g_init = NULL, fix_g = c(F, F, F),
-  control = NULL)
+ebpm_invBeta_gamma(x, s = 1, g_init = NULL, fix_g = c(F, F, F), control = NULL)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}

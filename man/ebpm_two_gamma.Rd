@@ -4,8 +4,15 @@
 \alias{ebpm_two_gamma}
 \title{Empirical Bayes Poisson Mean (mixture of two gammas as prior)}
 \usage{
-ebpm_two_gamma(x, s = 1, g_init = NULL, fix_g = F, n_iter = 100,
-  rel_tol = 1e-10, control = NULL)
+ebpm_two_gamma(
+  x,
+  s = 1,
+  g_init = NULL,
+  fix_g = F,
+  n_iter = 100,
+  rel_tol = 1e-10,
+  control = NULL
+)
 }
 \arguments{
 \item{x}{vector of Poisson observations.}

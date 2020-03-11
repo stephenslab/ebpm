@@ -4,8 +4,13 @@
 \alias{ebpm_gh_gamma}
 \title{Empirical Bayes Poisson Mean (gh-gamma as prior)}
 \usage{
-ebpm_gh_gamma(x, s = 1, g_init = NULL, fix_g = c(F, F, F, F, F),
-  control = NULL)
+ebpm_gh_gamma(
+  x,
+  s = 1,
+  g_init = NULL,
+  fix_g = c(F, F, F, F, F),
+  control = NULL
+)
 }
 \description{
 Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{s_j lambda_j ~ g()}

@@ -4,8 +4,15 @@
 \alias{ebpm_gamma_mixture2}
 \title{Empirical Bayes Poisson Mean with Mixture of Gamma as Prior (still in development)}
 \usage{
-ebpm_gamma_mixture2(x, s, grid, g_init = NULL, fix_g = FALSE,
-  control_select_grid = NULL, control = NULL)
+ebpm_gamma_mixture2(
+  x,
+  s,
+  grid = NULL,
+  g_init = NULL,
+  fix_g = FALSE,
+  control_select_grid = NULL,
+  control = NULL
+)
 }
 \arguments{
 \item{x}{A vector of Poisson observations.}

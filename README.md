@@ -16,6 +16,7 @@ Currently implemented methods are: `ebpm_point_gamma`, `ebpm_two_gamma`, `ebpm_p
 Install the ebpm package using `devtools`:
 
 ```R
+## install.packages("gsl") ## install `gsl` if it is not installed
 library(devtools)
 install_github("stephenslab/ebpm")
 ```

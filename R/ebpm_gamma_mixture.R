@@ -42,7 +42,7 @@
 
 ## compute ebpm_gamma_mixture problem
 ebpm_gamma_mixture <- function(x,s,shape, scale,  g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
-  ## a quick  fix when all `x` are 0
+	## a quick  fix when all `x` are 0
   if(max(x) == 0){
     return(ebpm_point_gamma(x = x, s = s, g_init = g_init, fix_g = fix_g))
   }
@@ -59,9 +59,12 @@ ebpm_gamma_mixture <- function(x,s,shape, scale,  g_init = NULL, fix_g = FALSE,m
     tmp <-  compute_L(x,s,a, b)
     L =  tmp$L
     l_rowmax = tmp$l_rowmax
-    fit <- mixsqp(L, x0 = g_init$pi, control = control)
+    fit <- try(mixsqp(L, x0 = g_init$pi, control = control))
+		if (class(fit) == "try-error"){
+			g_init$pi = g_init$pi + 1e-8
+			fit <- try(mixsqp(L, x0 = g_init$pi, control = control))
+		}
     pi = fit$x
-    pi = pi/sum(pi) ## seems that some times pi does not sum to one
   }
   else{
     pi = g_init$pi

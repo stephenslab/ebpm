@@ -1,6 +1,0 @@
-unnamed-chunk-2	[<-	length	matrix	rpois	runif	t
-unnamed-chunk-3	::	$	initialize_qg_from_LF	k	list	t	X
-unnamed-chunk-5	::	[[	$<-	init	k	list	maxiter	system.time	tol	verbose	X
-unnamed-chunk-6	::	[[	$<-	init	k	maxiter	pm_control	source	system.time	tol	verbose	X
-unnamed-chunk-7	::	[[	$<-	ebpm_two_gamma_fast4	init	k	maxiter	pm_control	source	system.time	tol	verbose	X
-unnamed-chunk-8	::	[[	$<-	ebpm_two_gamma_fast5	init	k	maxiter	pm_control	source	system.time	tol	verbose	X

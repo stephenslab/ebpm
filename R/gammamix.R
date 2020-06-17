@@ -9,7 +9,7 @@ gammamix <- function(pi, shape, scale) {
 structure(data.frame(pi = pi, shape = shape, scale = scale), class="gammamix")
 }
 
-scale2gammamix_init <- function(scale){
-  n = length(scale$shape)
-  return(gammamix(pi = replicate(n, 1)/n, shape = scale$shape, scale =  scale$scale))
+scale2gammamix_init <- function(shape, scale){
+  n = length(shape)
+  return(gammamix(pi = replicate(n, 1)/n, shape = shape, scale =  scale))
 }

@@ -42,10 +42,6 @@
 
 ## compute ebpm_gamma_mixture problem
 ebpm_gamma_mixture <- function(x,s,shape, scale,  g_init = NULL, fix_g = FALSE,m = 2, control =  NULL, low = NULL){
-	## a quick  fix when all `x` are 0
-  if(max(x) == 0){
-    return(ebpm_point_gamma(x = x, s = s, g_init = g_init, fix_g = fix_g))
-  }
   if(length(s) == 1){s = replicate(length(x),s)}
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){

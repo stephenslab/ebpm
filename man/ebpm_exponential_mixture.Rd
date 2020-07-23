@@ -4,16 +4,8 @@
 \alias{ebpm_exponential_mixture}
 \title{Empirical Bayes Poisson Mean with Mixture  of Exponential  as Prior}
 \usage{
-ebpm_exponential_mixture(
-  x,
-  s = 1,
-  scale = "estimate",
-  g_init = NULL,
-  fix_g = FALSE,
-  m = 2,
-  control = NULL,
-  low = NULL
-)
+ebpm_exponential_mixture(x, s = 1, scale = "estimate", g_init = NULL,
+  fix_g = FALSE, m = 2, control = NULL, low = NULL)
 }
 \arguments{
 \item{x}{A vector of Poisson observations.}

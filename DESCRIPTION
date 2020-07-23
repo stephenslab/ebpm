@@ -15,7 +15,6 @@ RoxygenNote: 7.0.2
 Imports:
     mixsqp,
     gtools,
-    stats,
-    gsl
+    stats
 Suggests: 
     testthat

@@ -46,7 +46,7 @@ ebpm_gamma_mixture <- function(x,s,shape, scale,  g_init = NULL, fix_g = FALSE,m
   if(is.null(control)){control = mixsqp_control_defaults()}
   if(is.null(g_init)){
     fix_g = FALSE ## then automatically unfix g if specified so
-    g_init = scale2gammamix_init(list(shape = shape, scale = scale))
+    g_init = scale2gammamix_init(shape = shape, scale = scale)
   }
   
   if(!fix_g){ ## need to estimate g_hat

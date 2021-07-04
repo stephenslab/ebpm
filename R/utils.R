@@ -81,6 +81,13 @@ dnbinom_cts_log_vec <- function(x, a, prob){
   return(a*log(prob) + tmp + lgamma_diff - lgamma(x+1))
 }
 
+# it is equivalent to dpois in R wiht log = T when X is integer; I allow  it  to compute when x is not integer
+dpois_cts_log_vec <- function(x, lam){
+  x * log(lam) - lam - lgamma(x+1)
+}
+
+
+
 ## compute lgamma(x + dx) - lgamma(dx), y > x
 ## when dx << x, and x is very large and dx is small
 ## use taylor expansion: 

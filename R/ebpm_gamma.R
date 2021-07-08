@@ -1,0 +1,45 @@
+#' @title Empirical Bayes Poisson Mean with Gamma  Prior
+#' @description Uses Empirical Bayes to fit the model \deqn{x_j | \lambda_j ~ Poi(s_j \lambda_j)} with \deqn{lambda_j ~ g()}
+#' with Point Gamma: g()  =  gamma(shape, scale)
+#' 
+#' @import stats
+
+#' @details The model is fit in two stages: i) estimate \eqn{g} by maximum likelihood (over shape, scale) (it's in fact Negative Binomial)
+#' ii) Compute posterior distributions for \eqn{\lambda_j} given \eqn{x_j,\hat{g}}.
+#' @param x vector of Poisson observations.
+#' @param s vector of scale factors for Poisson observations: the model is \eqn{y[j]~Pois(scale[j]*lambda[j])}.
+#' @param g_init The prior distribution \eqn{g}, of the class \code{point_gamma}, with \eqn{pi0} set to 0. Usually this is left
+#'   unspecified (\code{NULL}) and estimated from the data. However, it can be
+#'   used in conjuction with \code{fix_g = TRUE} to fix the prior (useful, for
+#'   example, to do computations with the "true" \eqn{g} in simulations). If
+#'   \code{g_init} is specified but \code{fix_g = FALSE}, \code{g_init}
+#'   specifies the initial value of \eqn{g} used during optimization. 
+#' @param fix_g If \code{TRUE}, fix the prior \eqn{g} at \code{g_init} instead
+#'   of estimating it.
+#' @param control A list of control parameters  to be passed to the optimization function. `nlm` is  used. 
+
+#' 
+#' @return A list containing elements:
+#'     \describe{
+#'       \item{\code{posterior}}{A data frame of summary results (posterior
+#'         means, and posterior log mean).}
+#'       \item{\code{fitted_g}}{The fitted prior \eqn{\hat{g}} of class \code{point_gamma}, with \eqn{pi0} equal 0} 
+#'       \item{\code{log_likelihood}}{The optimal log likelihood attained
+#'         \eqn{L(\hat{g})}.}
+#'      }
+#' @examples 
+#'    beta = c(rep(0,50),rexp(50))
+#'    x = rpois(100,beta) # simulate Poisson observations
+#'    s = replicate(100,1)
+#'    out = ebpm_gamma(x,s)
+#' @export ebpm_gamma
+
+
+## TODO:
+## consider the case where X are all  0s.   If  s are  not all 0, then pi* = 1, which is not reachable after transformation
+ebpm_gamma <- function(x, s = 1, g_init = NULL, fix_g = F, control = NULL){
+  return(ebpm_point_gamma(x = x, s = s, g_init = g_init, fix_g = fix_g, pi0 = 0, control = control))
+}
+
+
+

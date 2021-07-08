@@ -3,6 +3,7 @@
 export(compute.posterior.gammamix)
 export(compute_L)
 export(ebpm_exponential_mixture)
+export(ebpm_gamma)
 export(ebpm_gamma_mixture)
 export(ebpm_gamma_mixture2)
 export(ebpm_gamma_mixture_single_scale)

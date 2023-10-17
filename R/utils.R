@@ -73,10 +73,10 @@ dnbinom_cts_log_vec <- function(x, a, prob){
   tmp = x*log(1-prob)
   tmp[x == 0] = 0 ## R says 0*-Inf = NaN
   ## compute lgamma(a + x) - lgamma(a)
-  if(a > 1e+4 && x < 1e+4 && a/x > 1e+4){ ## this condition needs refinement!!
-    lgamma_diff = lgamma_diff_taylor(a, x)
-  }
-  else{lgamma_diff = lgamma(a + x)  - lgamma(a)}
+  lgamma_diff = lgamma(a + x)  - lgamma(a)
+  
+  subset = (lgamma_diff==0)  ## can occur when x very small compared with a 
+  lgamma_diff[subset] = lgamma_diff_taylor(a[subset], x[subset])
   
   return(a*log(prob) + tmp + lgamma_diff - lgamma(x+1))
 }
